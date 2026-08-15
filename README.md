@@ -38,6 +38,7 @@ npm run seed:fresh            # 20 clean careers
 npm run db:reset              # clear local game data
 npm run settle:expired        # idempotent expired-session worker
 npm run generate:freaks -- --count 4444 --seed my-seed
+npm run art:build-pack         # rebuild 41 aligned Production Pack V1 PNG layers
 npm run art:export -- --count 50 --career INTERN
 npm run art:export -- --count 50 --career INTERN --format png
 npm run typecheck
@@ -78,16 +79,16 @@ Settlement is one SQLite transaction. It re-reads state inside the transaction, 
 
 Integer cents persist SIM and market prices; integer parts-per-million persist returns and drawdowns. Career Score, normalized skill, and rating retain floating-point precision because they are bounded statistical scores, not balances.
 
-In development, `/art-lab` renders 50 deterministic QA Freaks, all six career evolutions for one identity, and matrices covering all 56 immutable visual values. More detail lives in [GAME_ENGINE.md](docs/GAME_ENGINE.md), [DATA_MODEL.md](docs/DATA_MODEL.md), [GENERATION.md](docs/GENERATION.md), and [ART_PIPELINE.md](docs/ART_PIPELINE.md).
+In development, `/art-lab` renders a dedicated six-career Production Pack V1 preview, 50 deterministic QA Freaks backed by real IMAGE layers, all six career evolutions for one identity, and matrices covering all 56 immutable visual values. More detail lives in [GAME_ENGINE.md](docs/GAME_ENGINE.md), [DATA_MODEL.md](docs/DATA_MODEL.md), [GENERATION.md](docs/GENERATION.md), and [ART_PIPELINE.md](docs/ART_PIPELINE.md).
 
 ## V0 limitations
 
 - Mock prices are a deterministic game feed, not historical or live exchange data.
-- V1 artwork uses code-authored SVG pixel layers; its validated adapter can replace individual descriptors with versioned local PNG/WebP production layers.
+- Production Pack V1 supplies 41 real transparent PNG layers; unsupported immutable traits retain the validated SVG fallback.
 - Share cards are responsive HTML/SVG components; server-side PNG export is not implemented.
 - SQLite serializes local writes. A production deployment should move repository transactions to PostgreSQL with explicit row locks.
 - No background daemon is bundled; schedule `npm run settle:expired` externally or settle lazily through the UI.
 
 ## Next logical phase
 
-After art-direction review in Art Lab, replace individual V1 descriptors with hand-cleaned transparent layer assets while preserving DNA and render signatures. Game deployment, an optional read-only live market adapter with durable price snapshots, and season operations remain separate workstreams. Blockchain work should remain separate until the game is fun and the deterministic engine is stable.
+After art-direction review in Art Lab, expand Production Pack V1 coverage with hand-cleaned immutable variants while preserving DNA, generator probabilities, and render signatures. Game deployment, an optional read-only live market adapter with durable price snapshots, and season operations remain separate workstreams. Blockchain work should remain separate until the game is fun and the deterministic engine is stable.

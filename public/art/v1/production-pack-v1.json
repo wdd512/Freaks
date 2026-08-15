@@ -1,0 +1,112 @@
+{
+  "version": "v1",
+  "canvas": {
+    "width": 128,
+    "height": 128
+  },
+  "anchors": {
+    "body": [
+      29,
+      76,
+      70,
+      43
+    ],
+    "head": [
+      45,
+      27,
+      40,
+      50
+    ],
+    "eyes": [
+      48,
+      43,
+      35,
+      18
+    ],
+    "mouth": [
+      54,
+      62,
+      22,
+      10
+    ],
+    "hair": [
+      43,
+      25,
+      43,
+      48
+    ],
+    "outfit": [
+      34,
+      75,
+      61,
+      43
+    ],
+    "workstation": [
+      3,
+      94,
+      122,
+      34
+    ],
+    "screens": [
+      3,
+      18,
+      122,
+      82
+    ],
+    "prop": [
+      92,
+      77,
+      26,
+      25
+    ],
+    "environment": [
+      0,
+      0,
+      128,
+      128
+    ]
+  },
+  "assets": [
+    "/art/v1/body/average.png",
+    "/art/v1/body/lanky.png",
+    "/art/v1/body/wide-shoulders.png",
+    "/art/v1/head/round.png",
+    "/art/v1/head/potato.png",
+    "/art/v1/head/long.png",
+    "/art/v1/eyes/sleepy.png",
+    "/art/v1/eyes/half-lidded.png",
+    "/art/v1/eyes/focused.png",
+    "/art/v1/eyes/dead-inside.png",
+    "/art/v1/mouth/flat.png",
+    "/art/v1/mouth/smirk.png",
+    "/art/v1/mouth/tiny-frown.png",
+    "/art/v1/hair/buzz-cut.png",
+    "/art/v1/hair/shaved.png",
+    "/art/v1/hair/short-messy.png",
+    "/art/v1/hair/hood-up.png",
+    "/art/v1/skin/warm-light.png",
+    "/art/v1/skin/bronze.png",
+    "/art/v1/skin/olive-tan.png",
+    "/art/v1/skin/deep-brown.png",
+    "/art/v1/outfit/torn-hoodie.png",
+    "/art/v1/outfit/clean-hoodie.png",
+    "/art/v1/outfit/pattern-hoodie.png",
+    "/art/v1/outfit/luxury-coat.png",
+    "/art/v1/environment/poor-room.png",
+    "/art/v1/environment/basic-trading-room.png",
+    "/art/v1/environment/clean-crypto-office.png",
+    "/art/v1/environment/luxury-night-office.png",
+    "/art/v1/workstation/old-laptop-desk.png",
+    "/art/v1/workstation/single-monitor-desk.png",
+    "/art/v1/workstation/dual-monitor-setup.png",
+    "/art/v1/workstation/executive-trading-setup.png",
+    "/art/v1/screens/red-dump-chart.png",
+    "/art/v1/screens/green-uptrend-chart.png",
+    "/art/v1/screens/two-mixed-charts.png",
+    "/art/v1/screens/premium-chart-wall.png",
+    "/art/v1/prop/coffee-mug.png",
+    "/art/v1/prop/energy-drink.png",
+    "/art/v1/prop/purple-crystal.png",
+    "/art/v1/prop/gold-crypto-trophy.png"
+  ]
+}

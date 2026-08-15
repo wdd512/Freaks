@@ -2,7 +2,7 @@ import type { CareerLevel, FreakDNA, Mood } from "@/domain/types";
 import { ART_VERSION } from "@/art/version";
 import { CAREER_ART_POOLS } from "@/art/rules/career-pools";
 import { resolveCompatibility } from "@/art/rules/compatibility";
-import { buildPalette, DYNAMIC_ART_ASSETS, IMMUTABLE_ART_ASSETS } from "@/art/manifest";
+import { buildPalette, DYNAMIC_ART_ASSETS, IMMUTABLE_ART_ASSETS, PRODUCTION_PACK_V1_ASSETS } from "@/art/manifest";
 import { toImmutableArtIdentity } from "@/art/manifest/immutable";
 import type { DynamicArtState, DynamicSlot } from "@/art/manifest/dynamic";
 import type { ArtLayerAsset, FreakRenderSpec } from "@/art/renderer/types";
@@ -22,7 +22,8 @@ export function buildDynamicState(tokenId: number, dna: FreakDNA, careerLevel: C
 }
 
 function findAsset(slot: string, value: string, assets: ArtLayerAsset[]): ArtLayerAsset {
-  const found = assets.find((asset) => asset.id === artAssetId(slot, value));
+  const id = artAssetId(slot, value);
+  const found = PRODUCTION_PACK_V1_ASSETS.find((asset) => asset.id === id) ?? assets.find((asset) => asset.id === id);
   if (!found) throw new Error(`Missing V1 art descriptor for ${slot}:${value}`);
   return validateArtLayerAsset(found);
 }

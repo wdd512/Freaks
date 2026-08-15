@@ -14,6 +14,9 @@ export function PropLayer({ spec }: ArtLayerProps) {
     case "Calculator": prop = <g><rect x="94" y={y - 13} width="17" height="13" fill="#5b6661" stroke={outline} strokeWidth="2" /><rect x="97" y={y - 10} width="11" height="3" fill="#b8d1b9" />{[98, 102, 106].map((x) => <rect key={x} x={x} y={y - 5} width="2" height="2" fill={outline} />)}</g>; break;
     case "Ledger": prop = <g><polygon points={`91,${y - 9} 110,${y - 12} 114,${y - 1} 94,${y + 1}`} fill="#7b4839" stroke={gold} strokeWidth="2" /><path d={`M97 ${y - 8}l10-2m-9 5l10-2`} stroke={white} strokeWidth="1" /></g>; break;
     case "Champagne": prop = <g><rect x="101" y={y - 16} width="5" height="11" fill="#d8e9dc" /><polygon points={`98,${y - 5} 109,${y - 5} 106,${y - 1} 101,${y - 1}`} fill={gold} /><rect x="102" y={y - 1} width="4" height="2" fill={white} /></g>; break;
+    case "Coffee Mug": prop = <g><rect x="96" y={y - 14} width="12" height="14" fill="#ddd7c9" stroke={outline} strokeWidth="2" /><rect x="108" y={y - 10} width="6" height="8" fill="none" stroke="#ddd7c9" strokeWidth="3" /></g>; break;
+    case "Purple Crystal": prop = <g><polygon points={`101,${y - 22} 110,${y - 15} 108,${y - 3} 99,${y} 94,${y - 10}`} fill="#a968e0" stroke={outline} strokeWidth="3" /></g>; break;
+    case "Gold Crypto Trophy": prop = <g><polygon points={`96,${y - 21} 113,${y - 21} 110,${y - 9} 106,${y - 4} 101,${y - 4} 98,${y - 9}`} fill={gold} stroke={outline} strokeWidth="3" /><rect x="98" y={y - 1} width="14" height="3" fill="#9e7530" /></g>; break;
     default: prop = assertNever(name, "prop");
   }
   return <g data-layer="prop">{prop}</g>;

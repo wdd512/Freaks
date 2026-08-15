@@ -15,8 +15,13 @@ import { EffectsLayer } from "@/components/freak/art/layers/EffectsLayer";
 import { FrameLayer } from "@/components/freak/art/layers/FrameLayer";
 import { LayerAssetRenderer } from "@/components/freak/art/LayerAssetRenderer";
 import { findRenderAsset } from "@/art/renderer/assets";
+import { TintedLayerAssetRenderer } from "@/components/freak/art/TintedLayerAssetRenderer";
+import { resolveHeadwearFit } from "@/art/rules/compatibility";
 
 export function PixelCanvas({ spec, size = 512 }: { spec: FreakRenderSpec; size?: number }) {
+  const headOffset = { x: 0, y: spec.presentation.headOffsetY };
+  const headwearFit = resolveHeadwearFit(spec.presentation.headwearMode, spec.immutable.head);
+  const hairOffset = { x: headwearFit.x, y: spec.presentation.headOffsetY + headwearFit.y };
   return <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 128 128"
@@ -31,14 +36,13 @@ export function PixelCanvas({ spec, size = 512 }: { spec: FreakRenderSpec; size?
     <LayerAssetRenderer asset={findRenderAsset(spec, "environment", spec.dynamic.environment)} svgFallback={<EnvironmentLayer spec={spec} />} />
     <LayerAssetRenderer asset={findRenderAsset(spec, "workstation", spec.dynamic.workstation)} svgFallback={<WorkstationLayer spec={spec} />} />
     <LayerAssetRenderer asset={findRenderAsset(spec, "screens", spec.dynamic.screens)} svgFallback={<ScreenLayer spec={spec} />} />
-    <LayerAssetRenderer asset={findRenderAsset(spec, "body", spec.immutable.body)} svgFallback={<BodyLayer spec={spec} />} />
+    <TintedLayerAssetRenderer asset={findRenderAsset(spec, "body", spec.immutable.body)} skinAsset={findRenderAsset(spec, "skin", spec.immutable.skin)} skinColor={spec.palette.skin} tokenId={spec.tokenId} svgFallback={<BodyLayer spec={spec} />} />
     <LayerAssetRenderer asset={findRenderAsset(spec, "outfit", spec.dynamic.outfit)} svgFallback={<OutfitLayer spec={spec} />} />
     <NeckLayer spec={spec} />
-    <LayerAssetRenderer asset={findRenderAsset(spec, "head", spec.immutable.head)} svgFallback={<HeadLayer spec={spec} />} />
-    <LayerAssetRenderer asset={findRenderAsset(spec, "skin", spec.immutable.skin)} svgFallback={null} />
-    <LayerAssetRenderer asset={findRenderAsset(spec, "hair", spec.immutable.hair)} svgFallback={<HairLayer spec={spec} />} />
-    <LayerAssetRenderer asset={findRenderAsset(spec, "eyes", spec.immutable.eyes)} svgFallback={<EyeLayer spec={spec} />} />
-    <LayerAssetRenderer asset={findRenderAsset(spec, "mouth", spec.immutable.mouth)} svgFallback={<MouthLayer spec={spec} />} />
+    <TintedLayerAssetRenderer asset={findRenderAsset(spec, "head", spec.immutable.head)} skinAsset={findRenderAsset(spec, "skin", spec.immutable.skin)} skinColor={spec.palette.skin} tokenId={spec.tokenId} offset={headOffset} svgFallback={<HeadLayer spec={spec} />} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "hair", spec.immutable.hair)} offset={hairOffset} headwear={{ mode: spec.presentation.headwearMode, fit: headwearFit }} svgFallback={<HairLayer spec={spec} />} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "eyes", spec.immutable.eyes)} offset={headOffset} svgFallback={<EyeLayer spec={spec} />} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "mouth", spec.immutable.mouth)} offset={headOffset} svgFallback={<MouthLayer spec={spec} />} />
     <LayerAssetRenderer asset={findRenderAsset(spec, "prop", spec.dynamic.prop)} svgFallback={<PropLayer spec={spec} />} />
     <EffectsLayer spec={spec} />
     <FrameLayer spec={spec} />

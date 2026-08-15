@@ -44,6 +44,7 @@ export function ArtLabClient({ preview }: { preview: GeneratedFreak[] }) {
     && (tokenQuery === "" || freak.tokenId === Number(tokenQuery)),
   ), [preview, rarity, personality, tokenQuery]);
   const selected = preview.find((freak) => freak.tokenId === Number(tokenQuery)) ?? preview[0];
+  const productionDna: FreakDNA = { body: "Average", skin: "Warm Light", head: "Round", eyes: "Sleepy", mouth: "Smirk", hair: "Buzz Cut" };
   const matrices: { slot: keyof FreakDNA; title: string }[] = [
     { slot: "body", title: "BODIES" }, { slot: "skin", title: "SKINS" }, { slot: "head", title: "HEADS" },
     { slot: "eyes", title: "EYES" }, { slot: "mouth", title: "MOUTHS" }, { slot: "hair", title: "HAIR / HEADWEAR" },
@@ -60,6 +61,11 @@ export function ArtLabClient({ preview }: { preview: GeneratedFreak[] }) {
       <label>TOKEN ID<input type="number" min="1" max="50" placeholder="ALL" value={tokenQuery} onChange={(event) => setTokenQuery(event.target.value)} /></label>
       <label className="art-check"><input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} /> ACTIVE</label>
       <label className="art-check"><input type="checkbox" checked={debug} onChange={(event) => setDebug(event.target.checked)} /> DEBUG LABELS</label>
+    </section>
+    <section className="section" aria-labelledby="production-pack-title">
+      <div className="section-heading"><div><div className="kicker">41 ALIGNED PNG LAYERS // 128×128</div><h2 id="production-pack-title">PRODUCTION PACK V1</h2></div><span className="muted">REAL IMAGE MODE</span></div>
+      <p className="muted">One production-template identity across every career pool. Each preview resolves real PNG environment, workstation, screen, outfit, and prop layers; supported immutable traits also switch to PNG.</p>
+      <div className="art-evolution-grid">{CAREER_LEVELS.map((level, index) => <ArtSample key={level} tokenId={8001 + index} dna={productionDna} career={level} mood="NEUTRAL" active={false} debug={debug} label={`PACK V1 · ${level}`} testId="production-pack-preview" />)}</div>
     </section>
     <section className="section" aria-labelledby="collection-title">
       <div className="section-heading"><div><div className="kicker">50 DETERMINISTIC QA FREAKS</div><h2 id="collection-title">COLLECTION GRID</h2></div><span className="muted">{filtered.length} SHOWN</span></div>

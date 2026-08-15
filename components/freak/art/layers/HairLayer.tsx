@@ -1,21 +1,12 @@
 import type { ArtLayerProps } from "@/art/renderer/types";
 import { assertNever } from "@/art/renderer/assert-never";
+import { resolveHeadwearFit } from "@/art/rules/compatibility";
 
 export function HairLayer({ spec }: ArtLayerProps) {
   const name = spec.immutable.hair;
   const o = spec.presentation.headOffsetY;
   const { hair, hairLight, outline, gold, metal, green } = spec.palette;
-  let fitX = 0;
-  let fitY = 0;
-  switch (spec.presentation.headwearMode) {
-    case "NONE": case "HAIR": break;
-    case "HOOD": fitX = spec.immutable.head === "Crooked" ? 1 : spec.immutable.head === "Big Brain" ? -2 : 0; fitY = spec.immutable.head === "Big Brain" || spec.immutable.head === "Long" ? -2 : 0; break;
-    case "CAP": fitX = spec.immutable.head === "Crooked" ? 1 : 0; fitY = spec.immutable.head === "Long" ? -3 : 0; break;
-    case "HEADPHONES": fitX = spec.immutable.head === "Wide Jaw" ? -1 : 0; fitY = spec.immutable.head === "Wide Jaw" ? 1 : 0; break;
-    case "VISOR": fitX = spec.immutable.head === "Crooked" ? 2 : 0; fitY = spec.immutable.head === "Crooked" ? 1 : 0; break;
-    case "HAT": fitY = spec.immutable.head === "Big Brain" ? -3 : spec.immutable.head === "Flat Skull" ? 1 : 0; break;
-    default: assertNever(spec.presentation.headwearMode, "headwear presentation mode");
-  }
+  const { x: fitX, y: fitY } = resolveHeadwearFit(spec.presentation.headwearMode, spec.immutable.head);
   let hairArt: React.ReactNode;
   switch (name) {
     case "Bald": hairArt = <><rect x="58" y="35" width="2" height="2" fill={spec.palette.skinShadow} /><rect x="70" y="34" width="3" height="2" fill={spec.palette.skinShadow} /></>; break;

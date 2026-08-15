@@ -23,6 +23,10 @@ export function EnvironmentLayer({ spec }: ArtLayerProps) {
     case "Penthouse": art = <><Window luxury /><rect x="0" y="64" width="128" height="4" fill="#806a4a" /><rect x="4" y="9" width="120" height="3" fill={spec.palette.gold} /></>; break;
     case "Travel Jet": art = <><rect x="0" y="12" width="128" height="56" fill="#202827" />{[17, 52, 87].map((x) => <g key={x}><rect x={x} y="21" width="24" height="25" fill="#66716d" /><rect x={x + 4} y="25" width="16" height="17" fill="#132735" /></g>)}<rect x="0" y="53" width="128" height="4" fill="#b39e72" /></>; break;
     case "Bunker": art = <><rect x="0" y="11" width="128" height="58" fill="#202724" />{[8, 36, 64, 92, 120].map((x) => <rect key={x} x={x} y="17" width="3" height="3" fill="#66706b" />)}<rect x="7" y="28" width="114" height="28" fill="#121a18" stroke="#59645f" strokeWidth="3" /><rect x="61" y="28" width="4" height="28" fill="#59645f" /><rect x="109" y="36" width="5" height="5" fill={spec.palette.red} /></>; break;
+    case "Poor Room": art = <><rect x="0" y="13" width="128" height="55" fill="#171917" /><rect x="8" y="18" width="29" height="36" fill="#302a2c" stroke={spec.palette.outline} strokeWidth="3" /></>; break;
+    case "Basic Trading Room": art = <><rect x="0" y="13" width="128" height="55" fill="#18201f" /><rect x="8" y="15" width="36" height="39" fill="#25302e" stroke="#59625f" strokeWidth="3" /></>; break;
+    case "Clean Crypto Office": art = <><rect x="0" y="10" width="128" height="59" fill="#0e1b1a" /><rect x="5" y="10" width="118" height="49" fill="#132526" stroke="#3f5e58" strokeWidth="3" /></>; break;
+    case "Luxury Night Office": art = <><rect x="0" y="8" width="128" height="61" fill="#0b0d16" /><rect x="6" y="8" width="116" height="52" fill="#101d2b" stroke={spec.palette.gold} strokeWidth="3" /></>; break;
     default: art = assertNever(name, "environment");
   }
   return <g data-layer="environment">{art}</g>;

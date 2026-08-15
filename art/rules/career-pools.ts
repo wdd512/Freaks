@@ -3,28 +3,21 @@ import type { DynamicSlot } from "@/art/manifest/dynamic";
 
 export const CAREER_ART_POOLS: Record<CareerLevel, Record<DynamicSlot, readonly string[]>> = {
   REKT: {
-    outfit: ["Stained Tee", "Bathrobe", "Basic Tee"], workstation: ["Floor Setup", "Cardboard Desk", "Folding Desk"],
-    screens: ["Phone Only", "Cracked Laptop", "CRT"], prop: ["Cold Pizza", "Energy Drink", "Phone"],
-    environment: ["Basement", "Shared Room", "Factory Break Room"],
+    outfit: ["Torn Hoodie"], workstation: ["Old Laptop Desk"], screens: ["Red Dump Chart"], prop: ["Coffee Mug"], environment: ["Poor Room"],
   },
   INTERN: {
-    outfit: ["Basic Tee", "Cheap Hoodie"], workstation: ["Folding Desk", "IKEA Desk"], screens: ["Cracked Laptop", "Single Monitor"],
-    prop: ["Coffee", "Calculator", "Phone"], environment: ["Cheap Office", "Shared Room", "Bedroom"],
+    outfit: ["Clean Hoodie"], workstation: ["Single Monitor Desk"], screens: ["Green Uptrend Chart"], prop: ["Coffee Mug"], environment: ["Basic Trading Room"],
   },
   GRINDER: {
-    outfit: ["Oversized Hoodie", "Track Jacket", "Cheap Hoodie"], workstation: ["Office Desk", "Gaming Desk", "IKEA Desk"],
-    screens: ["Dual Monitor", "Single Monitor"], prop: ["Energy Drink", "Calculator", "Coffee"], environment: ["Bedroom", "Trading Office", "Cheap Office"],
+    outfit: ["Clean Hoodie"], workstation: ["Dual Monitor Setup"], screens: ["Two Mixed Charts"], prop: ["Energy Drink"], environment: ["Basic Trading Room", "Clean Crypto Office"],
   },
   PROFITABLE: {
-    outfit: ["Office Shirt", "Tech Vest", "Oversized Hoodie"], workstation: ["Standing Desk", "Gaming Desk", "Office Desk"],
-    screens: ["Triple Monitor", "Ultrawide", "Dual Monitor"], prop: ["Ledger", "Coffee", "Phone"], environment: ["Trading Office", "Neon Window", "Bedroom"],
+    outfit: ["Pattern Hoodie"], workstation: ["Dual Monitor Setup"], screens: ["Green Uptrend Chart", "Premium Chart Wall"], prop: ["Purple Crystal"], environment: ["Clean Crypto Office"],
   },
   WHALE: {
-    outfit: ["Half Suit", "Luxury Coat", "Tech Vest"], workstation: ["Institutional Desk", "Standing Desk"],
-    screens: ["Ultrawide", "Wall of Screens", "Triple Monitor"], prop: ["Champagne", "Phone", "Ledger"], environment: ["Penthouse", "Travel Jet", "Trading Office"],
+    outfit: ["Luxury Coat"], workstation: ["Executive Trading Setup"], screens: ["Premium Chart Wall"], prop: ["Gold Crypto Trophy"], environment: ["Luxury Night Office"],
   },
   MARKET_GOD: {
-    outfit: ["Luxury Coat", "Half Suit"], workstation: ["Institutional Desk"], screens: ["Wall of Screens"],
-    prop: ["Champagne", "Ledger"], environment: ["Penthouse", "Bunker", "Travel Jet"],
+    outfit: ["Luxury Coat"], workstation: ["Executive Trading Setup"], screens: ["Premium Chart Wall"], prop: ["Gold Crypto Trophy"], environment: ["Luxury Night Office"],
   },
 };

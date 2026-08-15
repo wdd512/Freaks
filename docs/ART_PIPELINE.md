@@ -46,11 +46,11 @@ V1 composes small replaceable React/SVG components in this order:
 13. mood/career/active effects
 14. frame
 
-Coordinates use integer logical pixels. Browser scaling and PNG export use nearest-neighbor behavior. The artwork avoids filters, gradients, blur, and large embedded data. Frame labels use an internal 3×5 rectangle-based pixel font, so browser and Sharp output do not depend on system fonts. Optional animation uses stepped CSS and is disabled by `prefers-reduced-motion`.
+Coordinates use integer logical pixels. Browser scaling and PNG export use nearest-neighbor behavior. The artwork avoids filters, gradients, blur, and large embedded data. The frame embeds no status text; active state is a small geometric indicator. Optional animation uses stepped CSS and is disabled by `prefers-reduced-motion`.
 
 ## Visual coverage
 
-The immutable manifest has 56 rendered values: 8 bodies, 8 skin palettes, 10 heads, 10 eyes, 8 mouths, and 12 hair/headwear styles. The dynamic manifest has 43 values: 10 outfits, 8 workstations, 8 screen arrangements, 7 props, and 10 environments.
+The immutable manifest has 56 rendered values: 8 bodies, 8 skin palettes, 10 heads, 10 eyes, 8 mouths, and 12 hair/headwear styles. The dynamic manifest has 61 values: 13 outfits, 12 workstations, 12 screen arrangements, 10 props, and 14 environments.
 
 Compatibility rules never reroll DNA. They reposition low floor desks, suppress desktop layouts for Phone Only, frame Wall of Screens where appropriate, fit headwear modes across head silhouettes, and preserve extreme mouth/head combinations.
 
@@ -60,6 +60,7 @@ Run `npm run dev` and open [http://localhost:3000/art-lab](http://localhost:3000
 
 It includes:
 
+- a dedicated six-career Production Pack V1 preview;
 - 50 deterministic collection previews using `pnl-freaks-art-v1`;
 - career, mood, active, rarity, personality, and token filters;
 - a six-career same-Freak evolution comparison;
@@ -84,8 +85,24 @@ SVG is the default. PNG uses Sharp and is emitted at 512×512. Both commands wri
 5. Check all six careers, Art Lab asset-mode labels, SVG export, and PNG export. PNG export inlines validated local images before Sharp rasterization.
 6. Update `ART_VERSION` only for a deliberate collection-wide renderer revision.
 
-Trait renderers use literal unions and exhaustive switches. Unknown values throw instead of silently falling back to another visual. Tests hash actual static SVG output and require unique counts of `8/8/10/10/8/12` for immutable slots and `10/8/8/7/10` for dynamic slots.
+Trait renderers use literal unions and exhaustive switches. Unknown values throw instead of silently falling back to another visual. Tests hash actual static SVG output and require every registered value within a slot to produce unique static output.
+
+## Production Pack V1
+
+Production Pack V1 adds 41 transparent, aligned, 128×128 PNG layers under `public/art/v1/`. The fixed template and anchors live in `art/manifest/production-pack-v1.ts`; `public/art/v1/template/production-character-template-v1.png` is the normalized visual reference. All production files use kebab-case names.
+
+The pack covers 3 bodies, 3 heads, 4 eyes, 3 mouths, 4 hair/headwear styles, 4 skin treatments, and four values for each dynamic slot. Existing generator DNA remains unchanged. Where the production vocabulary differs, the manifest bridges it to existing DNA: `half-lidded` is `Lazy Eye`, `focused` is `Laser Focus`, `dead-inside` is `Dead`, `tiny-frown` is `Lip Bite`, `shaved` is `Bald`, `short-messy` is `Messy Fringe`, `olive-tan` is `Olive`, and `deep-brown` is `Deep`.
+
+Career pools use the requested production progression. MARKET_GOD deliberately shares the premium WHALE scene ingredients and adds only the existing career aura, keeping exactly one premium prop and avoiding scene clutter. Unsupported immutable DNA continues through the exhaustive SVG fallback. IMAGE head and body masks use the selected production skin layer while retaining outline and pixel shading.
+
+The source pack is reproducible:
+
+```bash
+npm run art:build-pack
+```
+
+Pass `--template-source <path>` only when deliberately normalizing a reviewed replacement style anchor. Building the pack does not touch rarity weights, generation probabilities, or game state.
 
 ## Current limitations and next step
 
-V1 is authored as lightweight SVG pixel geometry. It is a production-ready pipeline contract and QA surface, but the individual layers are programmer art rather than hand-cleaned sprite sheets. The next art step is to replace descriptors incrementally with reviewed transparent PNG/WebP layers while preserving the render spec, compatibility rules, signatures, and V1 DNA mapping.
+Production coverage is intentionally partial. Unsupported immutable traits still use the programmer SVG layers; V2 should prioritize the most frequently generated immutable body/head/face/hair values, then add differentiated premium props and environment details without increasing scene clutter.

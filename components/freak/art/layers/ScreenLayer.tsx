@@ -10,7 +10,7 @@ function Chart({ x, y, width, height, color, cracked = false, active = false }: 
 
 export function ScreenLayer({ spec }: ArtLayerProps) {
   const name = spec.presentation.screenMode === "PHONE" ? "Phone Only"
-    : spec.presentation.screenMode === "WALL" ? "Wall of Screens" : spec.dynamic.screens;
+    : spec.presentation.screenMode === "WALL" && spec.dynamic.screens !== "Premium Chart Wall" ? "Wall of Screens" : spec.dynamic.screens;
   const active = spec.state.active;
   const color = spec.state.mood === "TILTED" || spec.state.mood === "MELTDOWN" ? spec.palette.red : spec.palette.green;
   const deskY = spec.presentation.deskY;
@@ -24,6 +24,10 @@ export function ScreenLayer({ spec }: ArtLayerProps) {
     case "Triple Monitor": screens = <g transform={`translate(0 ${deskY - 99})`}><Chart x={4} y={65} width={38} height={28} color={color} active={active} /><Chart x={45} y={57} width={38} height={35} color={spec.palette.green} active={active} /><Chart x={86} y={65} width={38} height={28} color={spec.palette.red} active={active} /></g>; break;
     case "Ultrawide": screens = <g transform={`translate(0 ${deskY - 99})`}><Chart x={13} y={57} width={102} height={35} color={color} active={active} /><rect x="60" y="92" width="8" height="9" fill="#6d7772" /></g>; break;
     case "Wall of Screens": screens = <g>{spec.presentation.wallFrame && <rect data-wall-frame="true" x="1" y="16" width="126" height="59" fill="none" stroke={spec.palette.gold} strokeWidth="2" />}{[[4, 25], [44, 19], [84, 25], [24, 50], [64, 49]].map(([x, y], i) => <Chart key={`${x}-${y}`} x={x} y={y} width={38} height={23} color={i % 2 ? spec.palette.red : color} active={active} />)}</g>; break;
+    case "Red Dump Chart": screens = <Chart x={39} y={59} width={50} height={35} color={spec.palette.red} active={active} />; break;
+    case "Green Uptrend Chart": screens = <Chart x={39} y={59} width={50} height={35} color={spec.palette.green} active={active} />; break;
+    case "Two Mixed Charts": screens = <><Chart x={13} y={62} width={48} height={31} color={spec.palette.green} active={active} /><Chart x={67} y={59} width={48} height={34} color={spec.palette.red} active={active} /></>; break;
+    case "Premium Chart Wall": screens = <g>{[[6,24],[46,20],[86,24],[25,49],[66,49]].map(([x,y],index)=><Chart key={`${x}-${y}`} x={x} y={y} width={36} height={22} color={index%2?spec.palette.red:spec.palette.green} active={active}/>)}</g>; break;
     default: screens = assertNever(name, "screen arrangement");
   }
   return <g data-layer="screens" data-screen-mode={spec.presentation.screenMode} className={active ? "pixel-screen-live" : undefined}>{screens}</g>;

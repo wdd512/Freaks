@@ -5,6 +5,7 @@ playwright-report/
 test-results/
 data/*.db*
 generation-report.json
+art-output/
 *.tsbuildinfo
 debug.log
 .env*.local

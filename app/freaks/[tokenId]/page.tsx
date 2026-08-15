@@ -1,0 +1,21 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getDb } from "@/db";
+import { FreakArt } from "@/components/freak/FreakArt";
+import { EquityChart } from "@/components/charts/EquityChart";
+import { formatPercentPpm, formatSim, labelize } from "@/components/ui/format";
+import type { CareerLevel, Mood } from "@/domain/types";
+import { getFreak } from "@/services/game/queries";
+import { ACHIEVEMENTS } from "@/domain/achievement/achievements";
+
+export const dynamic = "force-dynamic";
+export default async function FreakProfile({ params }: { params: Promise<{ tokenId:string }> }) {
+  const {tokenId}=await params; const freak=getFreak(getDb(),Number(tokenId)); if(!freak) notFound();
+  const meaningful=freak.wins+freak.losses>0; const winRate=meaningful?freak.wins/(freak.wins+freak.losses):0;
+  return <main className="shell"><section className="profile-head"><FreakArt tokenId={freak.tokenId} dna={freak.dna} careerLevel={freak.careerLevel as CareerLevel} mood={freak.mood as Mood} active={freak.active}/><div className="profile-meta"><div className="eyebrow"><span>#{freak.tokenId} · {freak.rarityTier}</span><span>{labelize(freak.personality)}</span></div><h1>{freak.name}</h1><p className="lede">{`${labelize(freak.careerLevel)} // ${freak.mood} // DNA LOCKED FOREVER. CAREER DAMAGE PERMANENT.`}</p><div className="actions"><Link className="button" href={`/terminal?tokenId=${freak.tokenId}`}>{freak.active?"VIEW ACTIVE SESSION":"TRADE THIS FREAK"}</Link></div></div></section>
+  <div className="stats-grid">{[["EQUITY",formatSim(freak.equityCents)],["CAREER PNL",formatPercentPpm(freak.careerReturnPpm)],["WIN RATE",meaningful?`${(winRate*100).toFixed(1)}%`:"—"],["MAX DD",`${(freak.maxDrawdownPpm/10000).toFixed(1)}%`],["SESSIONS",String(freak.settledSessions)],["W / L / LIQ",`${freak.wins} / ${freak.losses} / ${freak.liquidations}`],["CAREER SCORE",Math.round(freak.careerScore).toString()],["TRADER RATING",Math.round(freak.rating).toString()],["LIFETIME XP",freak.lifetimeXp.toLocaleString()],["STREAK",freak.currentStreak>0?`W${freak.currentStreak}`:freak.currentStreak<0?`L${Math.abs(freak.currentStreak)}`:"—"]].map(([label,value])=><div className="stat" key={label}><label>{label}</label><strong>{value}</strong></div>)}</div>
+  <section className="section"><div className="section-heading"><h2>EQUITY CURVE</h2></div>{freak.equityHistory.length?<EquityChart points={freak.equityHistory}/>:<div className="empty">NO SCARS YET. OPEN A SESSION.</div>}</section>
+  <div className="two-col"><section className="panel"><div className="panel-title">RECENT SESSIONS</div>{freak.sessions.length?<div className="table-wrap"><table className="data-table"><thead><tr><th>MARKET</th><th>CONFIG</th><th>RESULT</th><th>PNL</th><th>SHARE</th></tr></thead><tbody>{freak.sessions.slice(0,10).map(session=><tr key={session.id}><td>{session.asset} {session.direction}</td><td>{session.riskMode} · {session.duration}</td><td className={session.result==="WIN"?"positive":session.result==="SCRATCH"?"":"negative"}>{session.status==="SETTLED"?session.result:session.status}</td><td>{session.finalPnlPpm===null?"LOCKED":formatPercentPpm(session.finalPnlPpm)}</td><td>{session.status==="SETTLED"&&<Link href={`/share/${session.id}`}>OPEN ↗</Link>}</td></tr>)}</tbody></table></div>:<div className="empty">NO SESSIONS</div>}</section><aside className="panel"><div className="panel-title">IMMUTABLE DNA</div><div className="trait-list">{Object.entries(freak.dna).map(([slot,value])=><div key={slot}><span>{slot.toUpperCase()}</span>{value}</div>)}</div></aside></div>
+  <div className="two-col"><section className="panel"><div className="panel-title">ACHIEVEMENT WALL</div>{freak.achievements.length?<div className="trait-list">{freak.achievements.map(item=><div key={item.code}><span>+{ACHIEVEMENTS[item.code as keyof typeof ACHIEVEMENTS]?.points ?? 0} PTS</span>{ACHIEVEMENTS[item.code as keyof typeof ACHIEVEMENTS]?.name ?? item.code}</div>)}</div>:<div className="empty">NOTHING UNLOCKED. IMPRESS THE TERMINAL.</div>}</section><section className="panel"><div className="panel-title">CAREER LEVEL HISTORY</div>{freak.levelHistory.map(row=><div className="stat-line" key={row.id}><span>{row.fromLevel??"GENESIS"} → {row.toLevel}</span><span>{Math.round(row.careerScore)}</span></div>)}</section></div>
+  </main>;
+}

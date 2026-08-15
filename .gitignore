@@ -4,6 +4,7 @@ coverage/
 playwright-report/
 test-results/
 data/*.db*
+data/art-lab-flags.json
 generation-report.json
 art-output/
 *.tsbuildinfo

@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { GeneratedFreak } from "@/domain/rarity/generator";
-import { CAREER_LEVELS, MOODS, PERSONALITIES, RARITY_TIERS, type CareerLevel, type FreakDNA, type Mood } from "@/domain/types";
+import { CAREER_LEVELS, MOODS, type CareerLevel, type FreakDNA, type Mood } from "@/domain/types";
 import { IMMUTABLE_TRAITS } from "@/art/manifest/immutable";
 import { buildRenderSpec } from "@/art/renderer/build-render-spec";
 import { buildRenderSignature } from "@/art/renderer/render-signature";
 import { FreakRenderer } from "@/components/freak/art/FreakRenderer";
+import { MiniCollectionSection } from "@/components/freak/art/MiniCollectionSection";
+import type { MiniCollectionEntry } from "@/art/qa/mini-collection";
 
 function DebugLabel({ tokenId, dna, career, mood, active }: { tokenId: number; dna: FreakDNA; career: CareerLevel; mood: Mood; active: boolean }) {
   const spec = buildRenderSpec({ tokenId, dna, careerLevel: career, mood, active });
@@ -30,19 +32,12 @@ function ArtSample({ tokenId, dna, career, mood, active, debug, label, testId }:
   </article>;
 }
 
-export function ArtLabClient({ preview }: { preview: GeneratedFreak[] }) {
+export function ArtLabClient({ preview, miniCollection, missingImageLayers }: { preview: GeneratedFreak[]; miniCollection: MiniCollectionEntry[]; missingImageLayers: string[] }) {
   const [career, setCareer] = useState<CareerLevel>("INTERN");
   const [mood, setMood] = useState<Mood>("NEUTRAL");
   const [active, setActive] = useState(false);
-  const [rarity, setRarity] = useState("ALL");
-  const [personality, setPersonality] = useState("ALL");
   const [tokenQuery, setTokenQuery] = useState("");
   const [debug, setDebug] = useState(false);
-  const filtered = useMemo(() => preview.filter((freak) =>
-    (rarity === "ALL" || freak.rarityTier === rarity)
-    && (personality === "ALL" || freak.personality === personality)
-    && (tokenQuery === "" || freak.tokenId === Number(tokenQuery)),
-  ), [preview, rarity, personality, tokenQuery]);
   const selected = preview.find((freak) => freak.tokenId === Number(tokenQuery)) ?? preview[0];
   const productionDna: FreakDNA = { body: "Average", skin: "Warm Light", head: "Round", eyes: "Sleepy", mouth: "Smirk", hair: "Buzz Cut" };
   const matrices: { slot: keyof FreakDNA; title: string }[] = [
@@ -56,8 +51,6 @@ export function ArtLabClient({ preview }: { preview: GeneratedFreak[] }) {
     <section className="panel art-lab-controls" aria-label="Art lab controls">
       <label>CAREER<select value={career} onChange={(event) => setCareer(event.target.value as CareerLevel)}>{CAREER_LEVELS.map((value) => <option key={value}>{value}</option>)}</select></label>
       <label>MOOD<select value={mood} onChange={(event) => setMood(event.target.value as Mood)}>{MOODS.map((value) => <option key={value}>{value}</option>)}</select></label>
-      <label>RARITY<select value={rarity} onChange={(event) => setRarity(event.target.value)}><option>ALL</option>{RARITY_TIERS.map((value) => <option key={value}>{value}</option>)}</select></label>
-      <label>PERSONALITY<select value={personality} onChange={(event) => setPersonality(event.target.value)}><option>ALL</option>{PERSONALITIES.map((value) => <option key={value}>{value}</option>)}</select></label>
       <label>TOKEN ID<input type="number" min="1" max="50" placeholder="ALL" value={tokenQuery} onChange={(event) => setTokenQuery(event.target.value)} /></label>
       <label className="art-check"><input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} /> ACTIVE</label>
       <label className="art-check"><input type="checkbox" checked={debug} onChange={(event) => setDebug(event.target.checked)} /> DEBUG LABELS</label>
@@ -67,10 +60,7 @@ export function ArtLabClient({ preview }: { preview: GeneratedFreak[] }) {
       <p className="muted">One production-template identity across every career pool. Each preview resolves real PNG environment, workstation, screen, outfit, and prop layers; supported immutable traits also switch to PNG.</p>
       <div className="art-evolution-grid">{CAREER_LEVELS.map((level, index) => <ArtSample key={level} tokenId={8001 + index} dna={productionDna} career={level} mood="NEUTRAL" active={false} debug={debug} label={`PACK V1 · ${level}`} testId="production-pack-preview" />)}</div>
     </section>
-    <section className="section" aria-labelledby="collection-title">
-      <div className="section-heading"><div><div className="kicker">50 DETERMINISTIC QA FREAKS</div><h2 id="collection-title">COLLECTION GRID</h2></div><span className="muted">{filtered.length} SHOWN</span></div>
-      <div className="art-preview-grid">{filtered.map((freak) => <ArtSample key={freak.tokenId} tokenId={freak.tokenId} dna={freak.dna} career={career} mood={mood} active={active} debug={debug} label={`#${String(freak.tokenId).padStart(4, "0")} · ${freak.rarityTier} · ${freak.personality}`} testId="art-preview" />)}</div>
-    </section>
+    <MiniCollectionSection entries={miniCollection} missingImageLayers={missingImageLayers} />
     <section className="section" aria-labelledby="evolution-title">
       <div className="section-heading"><div><div className="kicker">SAME FREAK // SAME DNA</div><h2 id="evolution-title">COMPARE EVOLUTION</h2></div><span className="muted">#{selected.tokenId}</span></div>
       <div className="art-evolution-grid">{CAREER_LEVELS.map((level) => <ArtSample key={level} tokenId={selected.tokenId} dna={selected.dna} career={level} mood={mood} active={active} debug={debug} label={level} testId="art-evolution" />)}</div>

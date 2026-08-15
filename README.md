@@ -41,6 +41,7 @@ npm run generate:freaks -- --count 4444 --seed my-seed
 npm run art:build-pack         # rebuild 41 aligned Production Pack V1 PNG layers
 npm run art:export -- --count 50 --career INTERN
 npm run art:export -- --count 50 --career INTERN --format png
+npm run art:export-mini -- --per-card  # contact sheet, cards, manifest, QA report
 npm run typecheck
 npm run lint
 npm test                      # Vitest unit + integration suite
@@ -79,7 +80,7 @@ Settlement is one SQLite transaction. It re-reads state inside the transaction, 
 
 Integer cents persist SIM and market prices; integer parts-per-million persist returns and drawdowns. Career Score, normalized skill, and rating retain floating-point precision because they are bounded statistical scores, not balances.
 
-In development, `/art-lab` renders a dedicated six-career Production Pack V1 preview, 50 deterministic QA Freaks backed by real IMAGE layers, all six career evolutions for one identity, and matrices covering all 56 immutable visual values. More detail lives in [GAME_ENGINE.md](docs/GAME_ENGINE.md), [DATA_MODEL.md](docs/DATA_MODEL.md), [GENERATION.md](docs/GENERATION.md), and [ART_PIPELINE.md](docs/ART_PIPELINE.md).
+In development, `/art-lab` renders a dedicated six-career Production Pack V1 preview, a filterable/sortable Mini Collection V1 of 50 deterministic QA Freaks, local problem flags, all six career evolutions for one identity, and matrices covering all 56 immutable visual values. More detail lives in [GAME_ENGINE.md](docs/GAME_ENGINE.md), [DATA_MODEL.md](docs/DATA_MODEL.md), [GENERATION.md](docs/GENERATION.md), and [ART_PIPELINE.md](docs/ART_PIPELINE.md).
 
 ## V0 limitations
 

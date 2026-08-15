@@ -61,8 +61,11 @@ Run `npm run dev` and open [http://localhost:3000/art-lab](http://localhost:3000
 It includes:
 
 - a dedicated six-career Production Pack V1 preview;
-- 50 deterministic collection previews using `pnl-freaks-art-v1`;
-- career, mood, active, rarity, personality, and token filters;
+- a dedicated Mini Collection V1 grid of 50 deterministic previews using `pnl-freaks-art-v1` and balanced career assignment;
+- career, rarity, personality, immutable/dynamic trait, token, mood, and active filters;
+- sorting by token ID, rarity, or visual signature hash;
+- expandable immutable DNA, dynamic traits, asset mode, visual hash, and full render signature metadata;
+- local dev-only problem flags stored in ignored `data/art-lab-flags.json`;
 - a six-career same-Freak evolution comparison;
 - forced matrices for every immutable value;
 - optional complete render signatures and per-trait `SVG`/`IMAGE` production-asset modes.
@@ -72,9 +75,12 @@ It includes:
 ```bash
 npm run art:export -- --count 50 --career INTERN
 npm run art:export -- --count 50 --career INTERN --format png
+npm run art:export-mini -- --per-card
 ```
 
 SVG is the default. PNG uses Sharp and is emitted at 512×512. Both commands write numbered files and `manifest.json` to ignored `art-output/`. Optional arguments are `--mood`, `--seed`, and `--output`.
+
+`art:export-mini` exports the exact Mini Collection V1 seed and career assignment used by Art Lab. It writes a single 10×5 `contact-sheet.png`, `manifest.json`, and `qa-report.json` under `art-output/mini-collection-v1/`. Add `--per-card` for 50 individual PNGs, `--cell-size` to change the default 256-pixel card size, or `--output` to choose another directory. The QA report records trait frequencies, completed renders, missing IMAGE paths, duplicate signatures, same-DNA near-duplicate warnings, and every active SVG fallback.
 
 ## Adding production layer assets
 

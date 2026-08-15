@@ -15,6 +15,11 @@ const gameConfigSchema = z.object({
   demotionHysteresis: z.number().positive(),
   volatility: z.record(z.string(), z.number().positive()),
   xp: z.record(z.string(), z.number().int().nonnegative()),
+  marketDataValidation: z.object({
+    entryFutureToleranceMs: z.number().int().nonnegative(),
+    maxEntryAgeMs: z.number().int().positive(),
+    maxSettlementDelayMs: z.number().int().nonnegative(),
+  }),
 });
 
 export const GAME_CONFIG = gameConfigSchema.parse({
@@ -31,6 +36,11 @@ export const GAME_CONFIG = gameConfigSchema.parse({
   demotionHysteresis: 30,
   volatility: { BTC: 0.02, ETH: 0.027 },
   xp: { "1H": 10, "4H": 20, "8H": 30 },
+  marketDataValidation: {
+    entryFutureToleranceMs: 15_000,
+    maxEntryAgeMs: 60_000,
+    maxSettlementDelayMs: 15_000,
+  },
 });
 
 export function durationSeconds(duration: SessionDuration, development: boolean): number {

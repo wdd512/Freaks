@@ -6,9 +6,9 @@ All return-like persisted values use parts per million (`1.00% = 10,000 ppm`). P
 
 A server-validated open request contains only Freak, asset, direction, risk, and duration. The server obtains entry data, calculates an immutable expiry through `Clock`, and persists the `ACTIVE` session. A partial unique SQLite index permits only one `PENDING`, `ACTIVE`, or `EXPIRED` session per Freak. Sessions cannot be edited or closed early.
 
-The normal state path is `ACTIVE → EXPIRED → SETTLED`; the service accepts an expired `ACTIVE` row directly. `FAILED` is reserved for unrecoverable consistency or market-data failures. Settlement re-reads the row inside a transaction. A second call returns the settled row and cannot apply PnL twice.
+The normal state path is `ACTIVE → EXPIRED → SETTLED`; the service atomically claims an expired `ACTIVE`/`EXPIRED` row with a unique settlement token before reading mutable career state. The final status compare-and-set must still own that token before any career side effects are written. `FAILED` is reserved for unrecoverable consistency or market-data failures. A second call returns the settled row and cannot apply PnL twice.
 
-Settlement requests the first market tick at or after `expiresAt`. Entry and exit timestamps are stored. A late click therefore cannot select a later price.
+Settlement requests the first market tick at or after `expiresAt`. Entry and exit timestamps are stored. A late click therefore cannot select a later price. Central validation rejects stale/future entry ticks and settlement ticks outside the configured expiry window.
 
 ## PnL and risk
 

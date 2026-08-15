@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, inArray, lte } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lte } from "drizzle-orm";
 import { z } from "zod";
 import type { GameDatabase } from "@/db";
 import {
@@ -18,6 +18,7 @@ import {
 import type { Clock } from "@/services/clock";
 import { isDevelopmentTime } from "@/services/clock";
 import type { MarketDataProvider } from "@/services/market-data";
+import { validateEntryMarketPrice, validateSettlementMarketPrice } from "@/services/market-data/validation";
 import { gameLog } from "@/services/logging";
 
 const openSchema = z.object({
@@ -27,6 +28,14 @@ const openSchema = z.object({
 
 export type OpenSessionInput = z.infer<typeof openSchema>;
 
+const ACTIVE_SESSION_ERROR = "This Freak already has an active session";
+
+function isActiveSessionConstraintError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const code = "code" in error && typeof error.code === "string" ? error.code : "";
+  return code === "SQLITE_CONSTRAINT_UNIQUE" && error.message.includes("sessions.token_id");
+}
+
 export class SessionService {
   constructor(private readonly db: GameDatabase, private readonly market: MarketDataProvider, private readonly clock: Clock) {}
 
@@ -35,20 +44,25 @@ export class SessionService {
     const freak = this.db.select().from(freaks).where(eq(freaks.tokenId, input.tokenId)).get();
     if (!freak) throw new Error("Freak not found");
     const active = this.db.select().from(sessions).where(and(eq(sessions.tokenId, input.tokenId), inArray(sessions.status, ["PENDING", "ACTIVE", "EXPIRED"]))).get();
-    if (active) throw new Error("This Freak already has an active session");
+    if (active) throw new Error(ACTIVE_SESSION_ERROR);
     const entry = await this.market.getCurrentPrice(input.asset);
-    if (entry.priceCents <= 0 || !Number.isSafeInteger(entry.priceCents)) throw new Error("Invalid entry market data");
     const now = this.clock.now();
+    validateEntryMarketPrice(entry, input.asset, now);
     const expiresAt = new Date(now.getTime() + durationSeconds(input.duration, isDevelopmentTime()) * 1000);
     const id = randomUUID();
-    this.db.transaction((tx) => {
-      tx.insert(sessions).values({
-        id, tokenId: input.tokenId, asset: input.asset, direction: input.direction, riskMode: input.riskMode,
-        duration: input.duration, status: "ACTIVE", entryPriceCents: entry.priceCents,
-        entryPriceTimestamp: entry.timestamp, openedAt: now, expiresAt, createdAt: now, updatedAt: now,
-      }).run();
-      tx.insert(priceSnapshots).values({ sessionId: id, kind: "ENTRY", asset: input.asset, priceCents: entry.priceCents, timestamp: entry.timestamp, source: entry.source }).run();
-    });
+    try {
+      this.db.transaction((tx) => {
+        tx.insert(sessions).values({
+          id, tokenId: input.tokenId, asset: input.asset, direction: input.direction, riskMode: input.riskMode,
+          duration: input.duration, status: "ACTIVE", entryPriceCents: entry.priceCents,
+          entryPriceTimestamp: entry.timestamp, openedAt: now, expiresAt, createdAt: now, updatedAt: now,
+        }).run();
+        tx.insert(priceSnapshots).values({ sessionId: id, kind: "ENTRY", asset: input.asset, priceCents: entry.priceCents, timestamp: entry.timestamp, source: entry.source }).run();
+      });
+    } catch (error) {
+      if (isActiveSessionConstraintError(error)) throw new Error(ACTIVE_SESSION_ERROR);
+      throw error;
+    }
     gameLog("SESSION_OPENED", { sessionId: id, tokenId: input.tokenId, asset: input.asset, direction: input.direction });
     return this.db.select().from(sessions).where(eq(sessions.id, id)).get();
   }
@@ -59,12 +73,29 @@ export class SessionService {
     if (original.status === "SETTLED") return original;
     if (!original.expiresAt || this.clock.now() < original.expiresAt) throw new Error("Session has not expired");
     const exit = await this.market.getSettlementPrice(original.asset as Asset, original.expiresAt);
-    if (exit.priceCents <= 0 || exit.timestamp < original.expiresAt) throw new Error("Invalid settlement market data");
+    validateSettlementMarketPrice(exit, original.asset as Asset, original.expiresAt);
 
     return this.db.transaction((tx) => {
-      const session = tx.select().from(sessions).where(eq(sessions.id, sessionId)).get();
-      if (!session) throw new Error("Session not found");
-      if (session.status === "SETTLED") return session;
+      const claimId = randomUUID();
+      const claimTime = this.clock.now();
+      const claim = tx.update(sessions).set({
+        status: "EXPIRED",
+        settlementClaimId: claimId,
+        settlementClaimedAt: claimTime,
+        updatedAt: claimTime,
+      }).where(and(
+        eq(sessions.id, sessionId),
+        inArray(sessions.status, ["ACTIVE", "EXPIRED"]),
+        isNull(sessions.settlementClaimId),
+      )).run();
+      if (claim.changes !== 1) {
+        const current = tx.select().from(sessions).where(eq(sessions.id, sessionId)).get();
+        if (!current) throw new Error("Session not found");
+        if (current.status === "SETTLED") return current;
+        throw new Error("Session settlement is already in progress");
+      }
+      const session = tx.select().from(sessions).where(and(eq(sessions.id, sessionId), eq(sessions.settlementClaimId, claimId))).get();
+      if (!session) throw new Error("Settlement claim lost before state calculation");
       const career = tx.select().from(careerStates).where(eq(careerStates.tokenId, session.tokenId)).get();
       const season = tx.select().from(seasonStates).where(eq(seasonStates.tokenId, session.tokenId)).get();
       const freak = tx.select().from(freaks).where(eq(freaks.tokenId, session.tokenId)).get();
@@ -117,9 +148,11 @@ export class SessionService {
       const mood = resolveMood([result, ...recent]);
       const now = this.clock.now();
 
-      tx.update(sessions).set({ status: "SETTLED", exitPriceCents: exit.priceCents, exitPriceTimestamp: exit.timestamp,
-        rawPnlPpm: calculation.rawPnlPpm, finalPnlPpm: calculation.finalPnlPpm, result, sessionSkill: skill, settledAt: now, updatedAt: now,
-      }).where(and(eq(sessions.id, session.id), inArray(sessions.status, ["ACTIVE", "EXPIRED"]))).run();
+      const settlementWrite = tx.update(sessions).set({ status: "SETTLED", exitPriceCents: exit.priceCents, exitPriceTimestamp: exit.timestamp,
+        rawPnlPpm: calculation.rawPnlPpm, finalPnlPpm: calculation.finalPnlPpm, result, sessionSkill: skill, settledAt: now,
+        settlementClaimId: null, settlementClaimedAt: null, updatedAt: now,
+      }).where(and(eq(sessions.id, session.id), eq(sessions.status, "EXPIRED"), eq(sessions.settlementClaimId, claimId))).run();
+      if (settlementWrite.changes !== 1) throw new Error("Settlement claim lost before commit");
       tx.insert(priceSnapshots).values({ sessionId: session.id, kind: "EXIT", asset: session.asset, priceCents: exit.priceCents, timestamp: exit.timestamp, source: exit.source }).run();
       tx.update(careerStates).set({ equityCents: equityAfter, equityPeakCents: dd.equityPeakCents, maxDrawdownPpm: dd.maxDrawdownPpm,
         wins, losses, scratches, liquidations, settledSessions: settled, winningShorts, currentStreak: streak,

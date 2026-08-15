@@ -1,4 +1,5 @@
-import { integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { check, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const freaks = sqliteTable("freaks", {
   tokenId: integer("token_id").primaryKey(),
@@ -7,7 +8,10 @@ export const freaks = sqliteTable("freaks", {
   rarityScore: real("rarity_score").notNull(),
   rarityTier: text("rarity_tier").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-});
+}, (table) => ({
+  personalityCheck: check("freaks_personality_check", sql`${table.personality} IN ('BULL_BRAIN','PERMABEAR','DEGEN','RISK_MANAGER','SCALPER','SWINGER','VOLATILITY_ADDICT','BORING_QUANT')`),
+  rarityTierCheck: check("freaks_rarity_tier_check", sql`${table.rarityTier} IN ('COMMON','UNCOMMON','RARE','EPIC','MYTHIC')`),
+}));
 
 export const freakDna = sqliteTable("freak_dna", {
   tokenId: integer("token_id").primaryKey().references(() => freaks.tokenId, { onDelete: "cascade" }),
@@ -32,7 +36,11 @@ export const careerStates = sqliteTable("career_states", {
   hasBeenRekt: integer("has_been_rekt", { mode: "boolean" }).notNull().default(false),
   hasBeenWhale: integer("has_been_whale", { mode: "boolean" }).notNull().default(false),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
-});
+}, (table) => ({
+  equityCheck: check("career_states_equity_check", sql`${table.equityCents} >= 0 AND ${table.equityPeakCents} >= 0`),
+  careerLevelCheck: check("career_states_level_check", sql`${table.careerLevel} IN ('REKT','INTERN','GRINDER','PROFITABLE','WHALE','MARKET_GOD')`),
+  moodCheck: check("career_states_mood_check", sql`${table.mood} IN ('EUPHORIC','HAPPY','FOCUSED','NEUTRAL','TILTED','MELTDOWN')`),
+}));
 
 export const seasonStates = sqliteTable("season_states", {
   tokenId: integer("token_id").primaryKey().references(() => freaks.tokenId, { onDelete: "cascade" }),
@@ -57,10 +65,24 @@ export const sessions = sqliteTable("sessions", {
   rawPnlPpm: integer("raw_pnl_ppm"), finalPnlPpm: integer("final_pnl_ppm"),
   result: text("result"), sessionSkill: real("session_skill"),
   settledAt: integer("settled_at", { mode: "timestamp_ms" }),
+  settlementClaimId: text("settlement_claim_id"),
+  settlementClaimedAt: integer("settlement_claimed_at", { mode: "timestamp_ms" }),
   failureReason: text("failure_reason"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
-});
+}, (table) => ({
+  oneNonFinalSession: uniqueIndex("one_active_session_per_freak").on(table.tokenId)
+    .where(sql`${table.status} IN ('PENDING','ACTIVE','EXPIRED')`),
+  assetCheck: check("sessions_asset_check", sql`${table.asset} IN ('BTC','ETH')`),
+  directionCheck: check("sessions_direction_check", sql`${table.direction} IN ('LONG','SHORT')`),
+  riskCheck: check("sessions_risk_check", sql`${table.riskMode} IN ('SAFE','NORMAL','DEGEN','FULL_SEND')`),
+  durationCheck: check("sessions_duration_check", sql`${table.duration} IN ('1H','4H','8H')`),
+  statusCheck: check("sessions_status_check", sql`${table.status} IN ('PENDING','ACTIVE','EXPIRED','SETTLED','FAILED')`),
+  resultCheck: check("sessions_result_check", sql`${table.result} IS NULL OR ${table.result} IN ('WIN','LOSS','SCRATCH','LIQUIDATED')`),
+  entryPriceCheck: check("sessions_entry_price_check", sql`${table.entryPriceCents} > 0`),
+  exitPriceCheck: check("sessions_exit_price_check", sql`${table.exitPriceCents} IS NULL OR ${table.exitPriceCents} > 0`),
+  expiryCheck: check("sessions_expiry_check", sql`${table.expiresAt} > ${table.openedAt}`),
+}));
 
 export const priceSnapshots = sqliteTable("price_snapshots", {
   id: integer("id").primaryKey({ autoIncrement: true }), sessionId: text("session_id").notNull().references(() => sessions.id),

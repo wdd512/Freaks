@@ -29,8 +29,20 @@ export function getDb(): GameDatabase {
 }
 
 export function migrate(db: GameDatabase): void {
-  const sql = fs.readFileSync(path.resolve(process.cwd(), "db/migrations/0000_initial.sql"), "utf8");
-  db.$client.exec(sql);
+  const migrationsDirectory = path.join(process.cwd(), "db", "migrations");
+  const migrationFiles = fs.readdirSync(migrationsDirectory).filter((file) => file.endsWith(".sql")).sort();
+  db.$client.exec("CREATE TABLE IF NOT EXISTS _game_migrations (name TEXT PRIMARY KEY, applied_at INTEGER NOT NULL)");
+  const applied = new Set(
+    (db.$client.prepare("SELECT name FROM _game_migrations").all() as { name: string }[]).map((row) => row.name),
+  );
+  for (const file of migrationFiles) {
+    if (applied.has(file)) continue;
+    const migrationSql = fs.readFileSync(path.join(migrationsDirectory, file), "utf8");
+    db.$client.transaction(() => {
+      db.$client.exec(migrationSql);
+      db.$client.prepare("INSERT INTO _game_migrations (name, applied_at) VALUES (?, ?)").run(file, Date.now());
+    })();
+  }
 }
 
 export function closeDb(): void {

@@ -67,7 +67,7 @@ A live provider is deliberately not included in V0. The `MarketDataProvider` int
 
 ## Architecture
 
-- `domain/` contains pure deterministic PnL, liquidation, career, rating, mood, achievement, visual-state, rarity, and collection-generation rules. It has no React or SQLite dependency.
+- `domain/` contains pure deterministic PnL, liquidation, career, rating, mood, achievement, rarity, and collection-generation rules. It has no React or SQLite dependency.
 - `services/` contains clock and market abstractions, structured game logging, query projections, and the atomic session application service.
 - `db/` contains Drizzle schemas, a checked-in SQL migration, deterministic fresh/demo seeding, and SQLite connection setup.
 - `app/` owns Next.js routes and server-owned actions. Clients submit choices only; prices, PnL, score, XP, and achievements are always computed server-side.
@@ -83,7 +83,7 @@ In development, `/art-lab` renders 50 deterministic QA Freaks, all six career ev
 ## V0 limitations
 
 - Mock prices are a deterministic game feed, not historical or live exchange data.
-- V1 artwork uses code-authored SVG pixel layers; the asset descriptor abstraction is ready for reviewed PNG/WebP production layers.
+- V1 artwork uses code-authored SVG pixel layers; its validated adapter can replace individual descriptors with versioned local PNG/WebP production layers.
 - Share cards are responsive HTML/SVG components; server-side PNG export is not implemented.
 - SQLite serializes local writes. A production deployment should move repository transactions to PostgreSQL with explicit row locks.
 - No background daemon is bundled; schedule `npm run settle:expired` externally or settle lazily through the UI.

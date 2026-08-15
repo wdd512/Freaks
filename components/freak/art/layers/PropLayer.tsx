@@ -1,4 +1,5 @@
 import type { ArtLayerProps } from "@/art/renderer/types";
+import { assertNever } from "@/art/renderer/assert-never";
 
 export function PropLayer({ spec }: ArtLayerProps) {
   const y = spec.presentation.deskY - 1;
@@ -13,8 +14,7 @@ export function PropLayer({ spec }: ArtLayerProps) {
     case "Calculator": prop = <g><rect x="94" y={y - 13} width="17" height="13" fill="#5b6661" stroke={outline} strokeWidth="2" /><rect x="97" y={y - 10} width="11" height="3" fill="#b8d1b9" />{[98, 102, 106].map((x) => <rect key={x} x={x} y={y - 5} width="2" height="2" fill={outline} />)}</g>; break;
     case "Ledger": prop = <g><polygon points={`91,${y - 9} 110,${y - 12} 114,${y - 1} 94,${y + 1}`} fill="#7b4839" stroke={gold} strokeWidth="2" /><path d={`M97 ${y - 8}l10-2m-9 5l10-2`} stroke={white} strokeWidth="1" /></g>; break;
     case "Champagne": prop = <g><rect x="101" y={y - 16} width="5" height="11" fill="#d8e9dc" /><polygon points={`98,${y - 5} 109,${y - 5} 106,${y - 1} 101,${y - 1}`} fill={gold} /><rect x="102" y={y - 1} width="4" height="2" fill={white} /></g>; break;
-    default: prop = <g><rect x="91" y={y - 15} width="24" height="15" fill="#141b1a" stroke={gold} strokeWidth="2" /><rect x="95" y={y - 11} width="16" height="3" fill={green} /><rect x="95" y={y - 6} width="5" height="3" fill={red} /><rect x="102" y={y - 6} width="9" height="3" fill={gold} /></g>;
+    default: prop = assertNever(name, "prop");
   }
   return <g data-layer="prop">{prop}</g>;
 }
-

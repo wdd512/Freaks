@@ -15,6 +15,7 @@ function DebugLabel({ tokenId, dna, career, mood, active }: { tokenId: number; d
     {(Object.entries(dna) as [keyof FreakDNA, string][]).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}
     {(Object.entries(spec.dynamic) as [string, string][]).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}
     <div><dt>career</dt><dd>{career}</dd></div><div><dt>mood</dt><dd>{mood}</dd></div>
+    <div className="art-asset-modes"><dt>PRODUCTION ASSET MODE</dt><dd>{spec.assets.map((asset) => <span key={asset.id} data-testid="asset-mode">{asset.id.replace(/^v1:/, "")} = {asset.sourceType === "SVG_COMPONENT" ? "SVG" : "IMAGE"}</span>)}</dd></div>
     <div className="art-signature"><dt>SIGNATURE</dt><dd>{buildRenderSignature(spec)}</dd></div>
   </dl>;
 }
@@ -74,4 +75,3 @@ export function ArtLabClient({ preview }: { preview: GeneratedFreak[] }) {
     </section>
   </main>;
 }
-

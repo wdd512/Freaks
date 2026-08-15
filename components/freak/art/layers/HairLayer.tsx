@@ -1,9 +1,21 @@
 import type { ArtLayerProps } from "@/art/renderer/types";
+import { assertNever } from "@/art/renderer/assert-never";
 
 export function HairLayer({ spec }: ArtLayerProps) {
   const name = spec.immutable.hair;
   const o = spec.presentation.headOffsetY;
   const { hair, hairLight, outline, gold, metal, green } = spec.palette;
+  let fitX = 0;
+  let fitY = 0;
+  switch (spec.presentation.headwearMode) {
+    case "NONE": case "HAIR": break;
+    case "HOOD": fitX = spec.immutable.head === "Crooked" ? 1 : spec.immutable.head === "Big Brain" ? -2 : 0; fitY = spec.immutable.head === "Big Brain" || spec.immutable.head === "Long" ? -2 : 0; break;
+    case "CAP": fitX = spec.immutable.head === "Crooked" ? 1 : 0; fitY = spec.immutable.head === "Long" ? -3 : 0; break;
+    case "HEADPHONES": fitX = spec.immutable.head === "Wide Jaw" ? -1 : 0; fitY = spec.immutable.head === "Wide Jaw" ? 1 : 0; break;
+    case "VISOR": fitX = spec.immutable.head === "Crooked" ? 2 : 0; fitY = spec.immutable.head === "Crooked" ? 1 : 0; break;
+    case "HAT": fitY = spec.immutable.head === "Big Brain" ? -3 : spec.immutable.head === "Flat Skull" ? 1 : 0; break;
+    default: assertNever(spec.presentation.headwearMode, "headwear presentation mode");
+  }
   let hairArt: React.ReactNode;
   switch (name) {
     case "Bald": hairArt = <><rect x="58" y="35" width="2" height="2" fill={spec.palette.skinShadow} /><rect x="70" y="34" width="3" height="2" fill={spec.palette.skinShadow} /></>; break;
@@ -17,8 +29,8 @@ export function HairLayer({ spec }: ArtLayerProps) {
     case "Headphones": hairArt = <><path d="M44 51V42Q45 29 64 28Q83 29 84 42V51" fill="none" stroke={metal} strokeWidth="4" /><rect x="42" y="46" width="8" height="15" fill="#292d31" stroke={outline} strokeWidth="2" /><rect x="79" y="46" width="8" height="15" fill="#292d31" stroke={outline} strokeWidth="2" /></>; break;
     case "Visor": hairArt = <><polygon points="46,44 49,34 58,29 77,33 81,42" fill={hair} /><rect x="45" y="42" width="39" height="9" fill="#45bed1" stroke={outline} strokeWidth="2" /><rect x="51" y="44" width="25" height="2" fill="#a9f5f6" /></>; break;
     case "Beanie": hairArt = <><polygon points="47,42 49,33 57,25 73,25 80,34 81,42" fill="#875868" stroke={outline} strokeWidth="2" /><rect x="46" y="39" width="36" height="7" fill="#a46b7d" stroke={outline} strokeWidth="2" /><rect x="62" y="21" width="6" height="6" fill="#a46b7d" /></>; break;
-    default: hairArt = <><polygon points="45,39 52,18 61,31 68,15 76,31 84,20 82,42" fill="#b9c2bd" stroke={outline} strokeWidth="2" /><polygon points="52,34 59,24 63,36 72,23 77,37" fill={gold} opacity="0.65" /></>;
+    case "Foil Hat": hairArt = <><polygon points="45,39 52,18 61,31 68,15 76,31 84,20 82,42" fill="#b9c2bd" stroke={outline} strokeWidth="2" /><polygon points="52,34 59,24 63,36 72,23 77,37" fill={gold} opacity="0.65" /></>; break;
+    default: hairArt = assertNever(name, "hair/headwear");
   }
-  return <g data-layer="hair" transform={`translate(0 ${o})`}>{hairArt}</g>;
+  return <g data-layer="hair" data-headwear-mode={spec.presentation.headwearMode} data-headwear-fit={`${fitX},${fitY}`} transform={`translate(${fitX} ${o + fitY})`}>{hairArt}</g>;
 }
-

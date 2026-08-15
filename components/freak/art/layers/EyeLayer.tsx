@@ -1,4 +1,5 @@
 import type { ArtLayerProps } from "@/art/renderer/types";
+import { assertNever } from "@/art/renderer/assert-never";
 
 export function EyeLayer({ spec }: ArtLayerProps) {
   const name = spec.immutable.eyes;
@@ -15,8 +16,8 @@ export function EyeLayer({ spec }: ArtLayerProps) {
     case "Panic": eyes = <g><rect x="49" y={y - 2} width="13" height="13" fill={white} stroke={outline} strokeWidth="2" /><rect x="68" y={y - 2} width="13" height="13" fill={white} stroke={outline} strokeWidth="2" /><rect x="55" y={y + 2} width="3" height="6" fill={outline} /><rect x="72" y={y + 2} width="3" height="6" fill={outline} /><rect x="48" y={y - 6} width="13" height="2" fill={outline} /><rect x="69" y={y - 6} width="13" height="2" fill={outline} /></g>; break;
     case "Green Glow": eyes = <g className="pixel-eye-blink"><rect x="48" y={y - 1} width="14" height="10" fill="#173b2a" /><rect x="68" y={y - 1} width="14" height="10" fill="#173b2a" /><rect x="51" y={y + 2} width="9" height="4" fill={green} /><rect x="70" y={y + 2} width="9" height="4" fill={green} /><rect x="46" y={y + 2} width="2" height="4" fill={green} /><rect x="82" y={y + 2} width="2" height="4" fill={green} /></g>; break;
     case "Red Glow": eyes = <g className="pixel-eye-blink"><polygon points={`48,${y} 62,${y + 2} 60,${y + 8} 50,${y + 6}`} fill="#45191d" /><polygon points={`68,${y + 2} 82,${y} 80,${y + 6} 70,${y + 8}`} fill="#45191d" /><rect x="52" y={y + 3} width="8" height="3" fill={red} /><rect x="70" y={y + 3} width="8" height="3" fill={red} /></g>; break;
-    default: eyes = <g><rect x="48" y={y - 1} width="15" height="10" fill="#16333b" stroke={outline} strokeWidth="2" /><rect x="67" y={y - 1} width="15" height="10" fill="#16333b" stroke={outline} strokeWidth="2" /><rect x="51" y={y + 1} width="8" height="3" fill={screen} /><rect x="70" y={y + 1} width="8" height="3" fill={screen} /><rect x="59" y={y + 4} width="2" height="3" fill={green} /><rect x="70" y={y + 4} width="2" height="3" fill={red} /></g>;
+    case "Terminal Reflection": eyes = <g><rect x="48" y={y - 1} width="15" height="10" fill="#16333b" stroke={outline} strokeWidth="2" /><rect x="67" y={y - 1} width="15" height="10" fill="#16333b" stroke={outline} strokeWidth="2" /><rect x="51" y={y + 1} width="8" height="3" fill={screen} /><rect x="70" y={y + 1} width="8" height="3" fill={screen} /><rect x="59" y={y + 4} width="2" height="3" fill={green} /><rect x="70" y={y + 4} width="2" height="3" fill={red} /></g>; break;
+    default: eyes = assertNever(name, "eyes");
   }
   return <g data-layer="eyes">{eyes}</g>;
 }
-

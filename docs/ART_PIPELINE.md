@@ -13,7 +13,7 @@ tokenId + immutable DNA + career + mood + active
   -> browser canvas or static SVG/PNG export
 ```
 
-`ART_VERSION` is `v1`. A `FreakRenderSpec` contains immutable identity, independently selected dynamic state, presentation adjustments, a limited palette, effects, and `ArtLayerAsset` descriptors. Descriptors currently point to SVG components and can later point at `IMAGE` assets under `public/art/v1/` without changing game or renderer selection logic.
+`ART_VERSION` is `v1`. A `FreakRenderSpec` contains immutable identity, independently selected dynamic state, presentation adjustments, a limited palette, effects, and `ArtLayerAsset` descriptors. The shared layer adapter renders either the current SVG component or a local transparent PNG/WebP selected by the descriptor without changing game or domain logic.
 
 ## Determinism and identity
 
@@ -25,7 +25,7 @@ art version | token ID | full DNA | career | slot name
 
 There is no `Math.random()` in the art pipeline. Outfit, workstation, screens, prop, and environment are resolved independently from career pools. Career evolution never mutates body, skin, head, eyes, mouth, or hair/headwear.
 
-`buildRenderSignature(spec)` provides a stable debugging/export signature. Changing the renderer version is explicit and does not require changing Freak DNA.
+`buildRenderSignature(spec)` canonically includes version, token ID, immutable and dynamic values, state, sorted effects, presentation, palette, and sorted asset decisions. Anything represented by a supported V1 spec that can alter static SVG output therefore changes its signature. Changing the renderer version is explicit and does not require changing Freak DNA.
 
 ## Layers
 
@@ -46,7 +46,7 @@ V1 composes small replaceable React/SVG components in this order:
 13. mood/career/active effects
 14. frame
 
-Coordinates use integer logical pixels. Browser scaling and PNG export use nearest-neighbor behavior. The artwork avoids filters, gradients, blur, and large embedded data. Optional animation uses stepped CSS and is disabled by `prefers-reduced-motion`.
+Coordinates use integer logical pixels. Browser scaling and PNG export use nearest-neighbor behavior. The artwork avoids filters, gradients, blur, and large embedded data. Frame labels use an internal 3×5 rectangle-based pixel font, so browser and Sharp output do not depend on system fonts. Optional animation uses stepped CSS and is disabled by `prefers-reduced-motion`.
 
 ## Visual coverage
 
@@ -64,7 +64,7 @@ It includes:
 - career, mood, active, rarity, personality, and token filters;
 - a six-career same-Freak evolution comparison;
 - forced matrices for every immutable value;
-- optional complete render specs and signatures.
+- optional complete render signatures and per-trait `SVG`/`IMAGE` production-asset modes.
 
 ## Export
 
@@ -79,10 +79,12 @@ SVG is the default. PNG uses Sharp and is emitted at 512×512. Both commands wri
 
 1. Keep the existing manifest value and immutable DNA name stable.
 2. Place the versioned image below `public/art/v1/`.
-3. Change that value's `ArtLayerAsset` descriptor from `SVG_COMPONENT` to `IMAGE` and set `assetPath`.
-4. Add an image-backed layer adapter; do not add image decisions to game/domain code.
-5. Check all six careers and the relevant matrix in Art Lab.
+3. Change that value's `ArtLayerAsset` descriptor from `SVG_COMPONENT` to `IMAGE`, set its `assetPath`, and provide integer `x`, `y`, `width`, and `height` placement.
+4. Use only versioned local `.png` or `.webp` URLs such as `/art/v1/head/potato.png`; remote URLs and traversal are rejected.
+5. Check all six careers, Art Lab asset-mode labels, SVG export, and PNG export. PNG export inlines validated local images before Sharp rasterization.
 6. Update `ART_VERSION` only for a deliberate collection-wide renderer revision.
+
+Trait renderers use literal unions and exhaustive switches. Unknown values throw instead of silently falling back to another visual. Tests hash actual static SVG output and require unique counts of `8/8/10/10/8/12` for immutable slots and `10/8/8/7/10` for dynamic slots.
 
 ## Current limitations and next step
 

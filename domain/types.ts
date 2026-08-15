@@ -40,15 +40,6 @@ export type FreakDNA = {
   hair: string;
 };
 
-export type VisualState = {
-  outfit: string;
-  workstation: string;
-  screens: string;
-  prop: string;
-  environment: string;
-  effects: string[];
-};
-
 export type MarketPrice = {
   asset: Asset;
   priceCents: number;

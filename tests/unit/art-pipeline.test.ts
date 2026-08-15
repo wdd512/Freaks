@@ -1,48 +1,114 @@
+import { createHash } from "node:crypto";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vitest";
 import { CAREER_LEVELS, type CareerLevel, type FreakDNA, type Mood } from "@/domain/types";
 import { TRAIT_MANIFEST } from "@/domain/rarity/trait-manifest";
-import { DYNAMIC_ART_ASSETS, DYNAMIC_TRAITS } from "@/art/manifest/dynamic";
-import { IMMUTABLE_ART_ASSETS, IMMUTABLE_TRAITS } from "@/art/manifest/immutable";
+import { DYNAMIC_ART_ASSETS, DYNAMIC_TRAITS, type DynamicArtState, type DynamicSlot } from "@/art/manifest/dynamic";
+import { IMMUTABLE_ART_ASSETS, IMMUTABLE_TRAITS, type HairTrait, type HeadTrait, type ImmutableArtIdentity, type MouthTrait } from "@/art/manifest/immutable";
 import { CAREER_ART_POOLS } from "@/art/rules/career-pools";
 import { resolveCompatibility } from "@/art/rules/compatibility";
 import { ART_LAYER_ORDER } from "@/art/rules/layering";
+import { artAssetId, validateArtLayerAsset } from "@/art/renderer/assets";
 import { buildDynamicState, buildRenderSpec, selectDynamicSlot } from "@/art/renderer/build-render-spec";
+import { buildPalette } from "@/art/manifest/palettes";
 import { buildRenderSignature } from "@/art/renderer/render-signature";
-import type { DynamicArtState, FreakRenderSpec } from "@/art/renderer/types";
+import { renderStaticSvg } from "@/art/renderer/render-static-svg";
+import type { ArtLayerAsset, FreakRenderSpec, ImageArtLayerAsset } from "@/art/renderer/types";
 import { PixelCanvas } from "@/components/freak/art/PixelCanvas";
 
 const DNA: FreakDNA = { body: "Average", skin: "Sand", head: "Round", eyes: "Dead", mouth: "Flat", hair: "Bald" };
 const input = { tokenId: 1337, dna: DNA, careerLevel: "GRINDER" as CareerLevel, mood: "NEUTRAL" as Mood };
+const immutableSlots = Object.keys(IMMUTABLE_TRAITS) as (keyof ImmutableArtIdentity)[];
+const dynamicSlots = Object.keys(DYNAMIC_TRAITS) as DynamicSlot[];
+const descriptors = [...IMMUTABLE_ART_ASSETS, ...DYNAMIC_ART_ASSETS];
 
-describe("V1 art pipeline", () => {
-  test("same identity and state produce the same spec and signature", () => {
+function descriptor(traitSlot: string, value: string): ArtLayerAsset {
+  const found = descriptors.find((asset) => asset.id === artAssetId(traitSlot, value));
+  if (!found) throw new Error(`Test descriptor not found: ${traitSlot}:${value}`);
+  return found;
+}
+
+function replaceDescriptor(spec: FreakRenderSpec, traitSlot: string, value: string, replacement = descriptor(traitSlot, value)): ArtLayerAsset[] {
+  const prefix = `v1:${traitSlot}:`;
+  return spec.assets.map((asset) => asset.id.startsWith(prefix) ? replacement : asset);
+}
+
+function forceImmutable(base: FreakRenderSpec, slot: keyof ImmutableArtIdentity, value: string): FreakRenderSpec {
+  const identity = { ...base.immutable, [slot]: value } as ImmutableArtIdentity;
+  return {
+    ...base,
+    immutable: identity,
+    palette: buildPalette(identity, base.tokenId),
+    assets: replaceDescriptor(base, slot, value),
+    presentation: resolveCompatibility(identity, base.dynamic, base.state.mood),
+  };
+}
+
+function forceDynamic(base: FreakRenderSpec, slot: DynamicSlot, value: string): FreakRenderSpec {
+  const dynamic = { ...base.dynamic, [slot]: value } as DynamicArtState;
+  return {
+    ...base,
+    dynamic,
+    assets: replaceDescriptor(base, slot, value),
+    presentation: resolveCompatibility(base.immutable, dynamic, base.state.mood),
+  };
+}
+
+const svgHash = (spec: FreakRenderSpec): string => createHash("sha256").update(renderStaticSvg(spec, false)).digest("hex");
+
+describe("V1.1 art pipeline correctness", () => {
+  test("same render spec produces the same canonical signature", () => {
     const first = buildRenderSpec(input);
     const second = buildRenderSpec({ ...input, dna: { ...DNA } });
     expect(second).toEqual(first);
     expect(buildRenderSignature(second)).toBe(buildRenderSignature(first));
   });
 
-  test("every immutable trait changes its relevant render descriptor", () => {
-    for (const slot of Object.keys(TRAIT_MANIFEST) as (keyof FreakDNA)[]) {
-      const values = IMMUTABLE_TRAITS[slot];
-      const first = buildRenderSpec({ ...input, dna: { ...DNA, [slot]: values[0] } });
-      const second = buildRenderSpec({ ...input, dna: { ...DNA, [slot]: values[1] } });
-      expect(second.immutable[slot]).not.toBe(first.immutable[slot]);
-      expect(second.assets.map((asset) => asset.id)).not.toEqual(first.assets.map((asset) => asset.id));
-      if (slot === "skin") expect(second.palette.skin).not.toBe(first.palette.skin);
+  test("tokenId and deterministic effects are signature-integrity fields", () => {
+    const spec = buildRenderSpec(input);
+    expect(buildRenderSignature({ ...spec, tokenId: spec.tokenId + 1 })).not.toBe(buildRenderSignature(spec));
+    const withSpark = { ...spec, effects: [...spec.effects, "ACHIEVEMENT_SPARK"] };
+    expect(buildRenderSignature(withSpark)).not.toBe(buildRenderSignature(spec));
+    expect(renderStaticSvg(withSpark)).not.toBe(renderStaticSvg(spec));
+  });
+
+  test("identical signatures imply identical static V1 SVG output", () => {
+    const original = buildRenderSpec({ ...input, mood: "EUPHORIC", active: true });
+    const canonicallyEquivalent = { ...original, effects: [...original.effects].reverse(), assets: [...original.assets].reverse() };
+    expect(buildRenderSignature(canonicallyEquivalent)).toBe(buildRenderSignature(original));
+    expect(renderStaticSvg(canonicallyEquivalent)).toBe(renderStaticSvg(original));
+  });
+
+  test("every immutable value has a unique rendered SVG hash inside its slot", () => {
+    const base = buildRenderSpec(input);
+    const expected = { body: 8, skin: 8, head: 10, eyes: 10, mouth: 8, hair: 12 } as const;
+    for (const slot of immutableSlots) {
+      const hashes = new Set(IMMUTABLE_TRAITS[slot].map((value) => svgHash(forceImmutable(base, slot, value))));
+      expect(hashes.size, `${slot} render uniqueness`).toBe(expected[slot]);
     }
+  });
+
+  test("every dynamic value has a unique rendered SVG hash inside its slot", () => {
+    const base = buildRenderSpec(input);
+    const expected = { outfit: 10, workstation: 8, screens: 8, prop: 7, environment: 10 } as const;
+    for (const slot of dynamicSlots) {
+      const hashes = new Set(DYNAMIC_TRAITS[slot].map((value) => svgHash(forceDynamic(base, slot, value))));
+      expect(hashes.size, `${slot} render uniqueness`).toBe(expected[slot]);
+    }
+  });
+
+  test("typed art manifest exactly matches the unchanged generator manifest", () => {
+    for (const slot of immutableSlots) expect([...IMMUTABLE_TRAITS[slot]]).toEqual(TRAIT_MANIFEST[slot].map((trait) => trait.name));
     expect(IMMUTABLE_ART_ASSETS).toHaveLength(56);
+    expect(DYNAMIC_ART_ASSETS).toHaveLength(43);
   });
 
   test("dynamic slots resolve independently rather than as canned scenes", () => {
     const combinations = Array.from({ length: 200 }, (_, index) => buildDynamicState(index + 1, DNA, "GRINDER"));
     expect(new Set(combinations.map((state) => JSON.stringify(state))).size).toBeGreaterThan(10);
-    for (const slot of Object.keys(DYNAMIC_TRAITS) as (keyof DynamicArtState)[]) {
-      const picked = new Set(combinations.map((state) => state[slot]));
-      expect(picked.size).toBeGreaterThan(1);
-      expect(selectDynamicSlot(88, DNA, "GRINDER", slot)).toBe(selectDynamicSlot(88, DNA, "GRINDER", slot));
+    for (const slot of dynamicSlots) {
+      expect(new Set(combinations.map((state) => state[slot])).size).toBeGreaterThan(1);
       expect(CAREER_ART_POOLS.GRINDER[slot]).toContain(selectDynamicSlot(88, DNA, "GRINDER", slot));
     }
   });
@@ -53,54 +119,64 @@ describe("V1 art pipeline", () => {
     expect(new Set(specs.map((spec) => JSON.stringify(spec.dynamic))).size).toBe(CAREER_LEVELS.length);
   });
 
-  test("all descriptors exist and every immutable value renders", () => {
-    expect(DYNAMIC_ART_ASSETS).toHaveLength(43);
+  test("layer order and system-font-free pixel frame are stable", () => {
     expect(ART_LAYER_ORDER).toEqual(["background", "environment", "workstation", "screens", "body", "outfit", "neck", "head", "hair", "eyes", "mouth", "prop", "effects", "frame"]);
-    for (const slot of Object.keys(IMMUTABLE_TRAITS) as (keyof FreakDNA)[]) {
-      for (const value of IMMUTABLE_TRAITS[slot]) {
-        const spec = buildRenderSpec({ ...input, dna: { ...DNA, [slot]: value } });
-        expect(renderToStaticMarkup(createElement(PixelCanvas, { spec }))).toContain("<svg");
-        expect(spec.assets.some((asset) => asset.id.includes(`:${slot}:`))).toBe(true);
-      }
-    }
+    const markup = renderStaticSvg(buildRenderSpec({ ...input, active: true }), false);
+    expect(markup).toContain("data-pixel-text=\"LIVE\"");
+    expect(markup).not.toContain("<text");
+    expect(markup).not.toContain("font-family");
   });
 
-  test("every dynamic value and state effect renders through the same layer contract", () => {
-    const base = buildRenderSpec(input);
-    for (const slot of Object.keys(DYNAMIC_TRAITS) as (keyof DynamicArtState)[]) {
-      for (const value of DYNAMIC_TRAITS[slot]) {
-        const dynamic = { ...base.dynamic, [slot]: value };
-        const spec = { ...base, dynamic, presentation: resolveCompatibility(DNA, dynamic, "NEUTRAL") };
-        expect(DYNAMIC_ART_ASSETS.some((asset) => asset.id.includes(`:${slot}:${value.toLowerCase().replaceAll(" ", "-")}`))).toBe(true);
-        expect(renderToStaticMarkup(createElement(PixelCanvas, { spec }))).not.toContain("undefined");
-      }
-    }
-    for (const mood of ["EUPHORIC", "HAPPY", "FOCUSED", "NEUTRAL", "TILTED", "MELTDOWN"] as const) {
-      const spec = buildRenderSpec({ ...input, mood, active: true });
-      expect(renderToStaticMarkup(createElement(PixelCanvas, { spec }))).toContain("data-layer=\"effects\"");
-    }
+  test("IMAGE descriptors replace SVG fallback in browser and static export markup", () => {
+    const base = buildRenderSpec({ ...input, dna: { ...DNA, head: "Potato" } });
+    const image: ImageArtLayerAsset = {
+      id: artAssetId("head", "Potato"), slot: "head", sourceType: "IMAGE",
+      assetPath: "/art/v1/head/potato.png", placement: { x: 0, y: 0, width: 128, height: 128 },
+    };
+    const spec = { ...base, assets: replaceDescriptor(base, "head", "Potato", image) };
+    const browserMarkup = renderToStaticMarkup(createElement(PixelCanvas, { spec, size: 512 }));
+    const exportMarkup = renderStaticSvg(spec, false);
+    expect(browserMarkup).toBe(exportMarkup);
+    expect(exportMarkup).toContain("data-asset-source=\"IMAGE\"");
+    expect(exportMarkup).toContain("href=\"/art/v1/head/potato.png\"");
+    expect(buildRenderSignature(spec)).toContain("potato.png");
   });
 
-  test.each([
-    ["Foil Hat", "Big Brain", "Cigarette", "Floor Setup", "Phone Only", "Basement"],
-    ["Foil Hat", "Flat Skull", "Screaming", "Institutional Desk", "Wall of Screens", "Penthouse"],
-    ["Headphones", "Wide Jaw", "Flat", "Institutional Desk", "Wall of Screens", "Bunker"],
-    ["Hoodie Up", "Long", "Cigarette", "Standing Desk", "Ultrawide", "Travel Jet"],
-  ])("renders compatibility combination %# without missing coordinates", (hair, head, mouth, workstation, screens, environment) => {
-    const dna = { ...DNA, hair, head, mouth };
-    const dynamic: DynamicArtState = { outfit: "Luxury Coat", workstation, screens, prop: "Coffee", environment };
-    const base = buildRenderSpec({ ...input, dna });
-    const spec: FreakRenderSpec = { ...base, dynamic, presentation: resolveCompatibility(dna, dynamic, "MELTDOWN") };
-    const markup = renderToStaticMarkup(createElement(PixelCanvas, { spec }));
-    expect(markup).toContain("data-layer=\"frame\"");
-    expect(markup).not.toContain("undefined");
-    expect(Object.values(spec.presentation).every((value) => value !== undefined)).toBe(true);
+  test("IMAGE descriptors accept local PNG/WebP and reject unsafe or incomplete configuration", () => {
+    const placement = { x: 0, y: 0, width: 128, height: 128 };
+    expect(validateArtLayerAsset({ id: "v1:head:potato", slot: "head", sourceType: "IMAGE", assetPath: "/art/v1/head/potato.webp", placement })).toBeTruthy();
+    expect(() => validateArtLayerAsset({ id: "bad", slot: "head", sourceType: "IMAGE", assetPath: "https://example.com/potato.png", placement } as ArtLayerAsset)).toThrow(/versioned local/i);
+    expect(() => validateArtLayerAsset({ id: "bad", slot: "head", sourceType: "IMAGE", assetPath: "/art/v1/head/potato.png" } as ArtLayerAsset)).toThrow(/requires assetPath and placement/i);
+    expect(() => validateArtLayerAsset({ id: "bad", slot: "head", sourceType: "IMAGE", assetPath: "/art/v1/../potato.png", placement } as ArtLayerAsset)).toThrow(/versioned local/i);
   });
 
-  test("Cigarette remains visible with the meltdown screaming presentation", () => {
+  const compatibilityCases = [
+    { hair: "Foil Hat", head: "Big Brain", mouth: "Flat", workstation: "Institutional Desk", screens: "Wall of Screens", environment: "Penthouse", mode: "HAT", marker: "data-wall-frame=\"true\"" },
+    { hair: "Foil Hat", head: "Flat Skull", mouth: "Screaming", workstation: "Institutional Desk", screens: "Wall of Screens", environment: "Bunker", mode: "HAT", marker: "data-wall-frame=\"true\"" },
+    { hair: "Trading Cap", head: "Long", mouth: "Flat", workstation: "Standing Desk", screens: "Ultrawide", environment: "Travel Jet", mode: "CAP", marker: "data-headwear-fit=\"0,-3\"" },
+    { hair: "Headphones", head: "Wide Jaw", mouth: "Flat", workstation: "Office Desk", screens: "Dual Monitor", environment: "Trading Office", mode: "HEADPHONES", marker: "data-headwear-fit=\"-1,1\"" },
+    { hair: "Hoodie Up", head: "Big Brain", mouth: "Flat", workstation: "Gaming Desk", screens: "Triple Monitor", environment: "Bedroom", mode: "HOOD", marker: "data-headwear-fit=\"-2,-2\"" },
+    { hair: "Visor", head: "Crooked", mouth: "Flat", workstation: "IKEA Desk", screens: "Single Monitor", environment: "Cheap Office", mode: "VISOR", marker: "data-headwear-fit=\"2,1\"" },
+  ] as const satisfies readonly { hair: HairTrait; head: HeadTrait; mouth: MouthTrait; workstation: DynamicArtState["workstation"]; screens: DynamicArtState["screens"]; environment: DynamicArtState["environment"]; mode: string; marker: string }[];
+
+  test.each(compatibilityCases)("uses intentional compatibility geometry for $hair + $head", (combination) => {
+    let spec = buildRenderSpec({ ...input, dna: { ...DNA, hair: combination.hair, head: combination.head, mouth: combination.mouth } });
+    spec = forceDynamic(forceDynamic(forceDynamic(spec, "workstation", combination.workstation), "screens", combination.screens), "environment", combination.environment);
+    const markup = renderStaticSvg(spec, false);
+    expect(spec.presentation.headwearMode).toBe(combination.mode);
+    expect(markup).toContain(`data-headwear-mode=\"${combination.mode}\"`);
+    expect(markup).toContain(combination.marker);
+  });
+
+  test("Cigarette + screaming and Floor Setup + Phone Only use dedicated presentation paths", () => {
     const dna = { ...DNA, mouth: "Cigarette" };
-    const spec = buildRenderSpec({ ...input, dna, mood: "MELTDOWN" });
-    expect(spec.presentation.mouthPose).toBe("MELTDOWN_ACCENT");
-    expect(renderToStaticMarkup(createElement(PixelCanvas, { spec }))).toContain("#dd7b45");
+    let spec = buildRenderSpec({ ...input, dna, mood: "MELTDOWN" });
+    spec = forceDynamic(forceDynamic(spec, "workstation", "Floor Setup"), "screens", "Phone Only");
+    const markup = renderStaticSvg(spec, false);
+    expect(spec.presentation).toMatchObject({ deskY: 108, mouthPose: "MELTDOWN_ACCENT", screenMode: "PHONE" });
+    expect(markup).toContain("data-mouth-pose=\"MELTDOWN_ACCENT\"");
+    expect(markup).toContain("data-screen-mode=\"PHONE\"");
+    expect(markup).toContain("#dd7b45");
   });
 });
+

@@ -1,9 +1,22 @@
 import { TRAIT_MANIFEST, type TraitSlot } from "@/domain/rarity/trait-manifest";
 import type { ArtLayerAsset } from "@/art/renderer/types";
 
-export const IMMUTABLE_TRAITS = Object.fromEntries(
-  Object.entries(TRAIT_MANIFEST).map(([slot, traits]) => [slot, traits.map((trait) => trait.name)]),
-) as Record<TraitSlot, string[]>;
+export const IMMUTABLE_TRAITS = {
+  body: ["Average", "Lanky", "Compact", "Heavy", "Hunched", "Long Arms", "Tiny Torso", "Wide Shoulders"],
+  skin: ["Cool Light", "Warm Light", "Sand", "Olive", "Bronze", "Copper", "Umber", "Deep"],
+  head: ["Round", "Square", "Long", "Potato", "Big Brain", "Tiny Chin", "Wide Jaw", "Crooked", "Flat Skull", "Melted"],
+  eyes: ["Dead", "Sleepy", "Bloodshot", "Laser Focus", "Lazy Eye", "Tiny Dots", "Panic", "Green Glow", "Red Glow", "Terminal Reflection"],
+  mouth: ["Flat", "Smirk", "Screaming", "Broken Tooth", "Lip Bite", "Gum", "Cigarette", "Evil Smile"],
+  hair: ["Bald", "Bed Hair", "Buzz Cut", "Messy Fringe", "Mullet", "Slick Back", "Hoodie Up", "Trading Cap", "Headphones", "Visor", "Beanie", "Foil Hat"],
+} as const satisfies Record<TraitSlot, readonly string[]>;
+
+export type ImmutableArtIdentity = { [Slot in TraitSlot]: (typeof IMMUTABLE_TRAITS)[Slot][number] };
+export type BodyTrait = ImmutableArtIdentity["body"];
+export type SkinTrait = ImmutableArtIdentity["skin"];
+export type HeadTrait = ImmutableArtIdentity["head"];
+export type EyeTrait = ImmutableArtIdentity["eyes"];
+export type MouthTrait = ImmutableArtIdentity["mouth"];
+export type HairTrait = ImmutableArtIdentity["hair"];
 
 export const IMMUTABLE_ART_ASSETS: ArtLayerAsset[] = Object.entries(IMMUTABLE_TRAITS).flatMap(
   ([slot, values]) => values.map((value) => ({
@@ -22,11 +35,11 @@ export const BODY_GEOMETRY = {
   "Long Arms": { x: 42, y: 78, width: 44, height: 34, neckY: 69, neckHeight: 12, armDrop: 17 },
   "Tiny Torso": { x: 50, y: 87, width: 29, height: 25, neckY: 72, neckHeight: 17, armDrop: 7 },
   "Wide Shoulders": { x: 29, y: 80, width: 70, height: 35, neckY: 69, neckHeight: 13, armDrop: 8 },
-} as const;
+} as const satisfies Record<BodyTrait, { x: number; y: number; width: number; height: number; neckY: number; neckHeight: number; armDrop: number }>;
 
 export type BodyName = keyof typeof BODY_GEOMETRY;
 
-export const HEAD_POINTS: Record<string, readonly [number, number][]> = {
+export const HEAD_POINTS = {
   Round: [[49, 42], [55, 36], [73, 36], [80, 43], [81, 61], [74, 72], [55, 72], [47, 61]],
   Square: [[48, 38], [79, 38], [82, 70], [47, 70]],
   Long: [[53, 31], [75, 31], [79, 68], [72, 76], [55, 76], [49, 68]],
@@ -37,5 +50,21 @@ export const HEAD_POINTS: Record<string, readonly [number, number][]> = {
   Crooked: [[54, 33], [78, 38], [80, 62], [70, 74], [48, 68], [45, 45]],
   "Flat Skull": [[46, 35], [82, 35], [81, 62], [75, 72], [52, 72], [46, 61]],
   Melted: [[50, 35], [77, 37], [82, 55], [78, 70], [71, 68], [67, 77], [60, 70], [53, 75], [47, 61]],
-};
+} as const satisfies Record<HeadTrait, readonly (readonly [number, number])[]>;
 
+export function toImmutableArtIdentity(dna: Record<TraitSlot, string>): ImmutableArtIdentity {
+  const identity = {} as ImmutableArtIdentity;
+  for (const slot of Object.keys(IMMUTABLE_TRAITS) as TraitSlot[]) {
+    const value = dna[slot];
+    if (!(IMMUTABLE_TRAITS[slot] as readonly string[]).includes(value)) throw new Error(`Unsupported V1 ${slot} trait: ${value}`);
+    Object.assign(identity, { [slot]: value });
+  }
+  return identity;
+}
+
+// The art list is deliberately explicit for exhaustive renderer typing. This check
+// protects the unchanged generator manifest from drifting away at module load.
+for (const slot of Object.keys(IMMUTABLE_TRAITS) as TraitSlot[]) {
+  const generatorValues = TRAIT_MANIFEST[slot].map((trait) => trait.name);
+  if (generatorValues.join("|") !== IMMUTABLE_TRAITS[slot].join("|")) throw new Error(`V1 art manifest does not match generator slot: ${slot}`);
+}

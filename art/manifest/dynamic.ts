@@ -1,4 +1,4 @@
-import type { ArtLayerAsset, DynamicArtState } from "@/art/renderer/types";
+import type { ArtLayerAsset } from "@/art/renderer/types";
 
 export const DYNAMIC_TRAITS = {
   outfit: ["Stained Tee", "Bathrobe", "Basic Tee", "Cheap Hoodie", "Oversized Hoodie", "Track Jacket", "Office Shirt", "Tech Vest", "Half Suit", "Luxury Coat"],
@@ -8,7 +8,8 @@ export const DYNAMIC_TRAITS = {
   environment: ["Basement", "Shared Room", "Factory Break Room", "Cheap Office", "Bedroom", "Trading Office", "Neon Window", "Penthouse", "Travel Jet", "Bunker"],
 } as const;
 
-export type DynamicSlot = keyof DynamicArtState;
+export type DynamicSlot = keyof typeof DYNAMIC_TRAITS;
+export type DynamicArtState = { [Slot in DynamicSlot]: (typeof DYNAMIC_TRAITS)[Slot][number] };
 
 export const DYNAMIC_ART_ASSETS: ArtLayerAsset[] = Object.entries(DYNAMIC_TRAITS).flatMap(
   ([slot, values]) => values.map((value) => ({

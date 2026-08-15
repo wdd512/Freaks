@@ -1,12 +1,12 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { renderToStaticMarkup } from "react-dom/server";
 import sharp from "sharp";
 import { generateCollection } from "@/domain/rarity/generator";
 import { CAREER_LEVELS, MOODS, type CareerLevel, type Mood } from "@/domain/types";
 import { buildRenderSpec } from "@/art/renderer/build-render-spec";
 import { buildRenderSignature } from "@/art/renderer/render-signature";
-import { PixelCanvas } from "@/components/freak/art/PixelCanvas";
+import { renderStaticSvg } from "@/art/renderer/render-static-svg";
+import { inlineLocalArtAssets } from "@/scripts/lib/inline-art-assets";
 
 type ExportFormat = "svg" | "png";
 
@@ -37,10 +37,10 @@ for (const freak of collection) {
   const spec = buildRenderSpec({ tokenId: freak.tokenId, dna: freak.dna, careerLevel: career, mood });
   const baseName = String(freak.tokenId).padStart(4, "0");
   const file = `${baseName}.${format}`;
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>${renderToStaticMarkup(<PixelCanvas spec={spec} size={512} />)}`;
+  const svg = renderStaticSvg(spec);
   const target = path.join(outputDirectory, file);
   if (format === "svg") await writeFile(target, svg, "utf8");
-  else await sharp(Buffer.from(svg)).resize(512, 512, { kernel: "nearest", fit: "fill" }).png().toFile(target);
+  else await sharp(Buffer.from(await inlineLocalArtAssets(svg))).resize(512, 512, { kernel: "nearest", fit: "fill" }).png().toFile(target);
   manifest.push({
     tokenId: freak.tokenId,
     dna: freak.dna,
@@ -53,4 +53,3 @@ for (const freak of collection) {
 
 await writeFile(path.join(outputDirectory, "manifest.json"), `${JSON.stringify({ seed, format, count, career, mood, freaks: manifest }, null, 2)}\n`, "utf8");
 console.log(`Exported ${count} deterministic ${format.toUpperCase()} artworks to ${outputDirectory}`);
-

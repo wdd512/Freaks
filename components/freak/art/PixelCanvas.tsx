@@ -13,6 +13,8 @@ import { MouthLayer } from "@/components/freak/art/layers/MouthLayer";
 import { PropLayer } from "@/components/freak/art/layers/PropLayer";
 import { EffectsLayer } from "@/components/freak/art/layers/EffectsLayer";
 import { FrameLayer } from "@/components/freak/art/layers/FrameLayer";
+import { LayerAssetRenderer } from "@/components/freak/art/LayerAssetRenderer";
+import { findRenderAsset } from "@/art/renderer/assets";
 
 export function PixelCanvas({ spec, size = 512 }: { spec: FreakRenderSpec; size?: number }) {
   return <svg
@@ -26,19 +28,19 @@ export function PixelCanvas({ spec, size = 512 }: { spec: FreakRenderSpec; size?
     style={{ imageRendering: "pixelated" }}
   >
     <BackgroundLayer spec={spec} />
-    <EnvironmentLayer spec={spec} />
-    <WorkstationLayer spec={spec} />
-    <ScreenLayer spec={spec} />
-    <BodyLayer spec={spec} />
-    <OutfitLayer spec={spec} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "environment", spec.dynamic.environment)} svgFallback={<EnvironmentLayer spec={spec} />} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "workstation", spec.dynamic.workstation)} svgFallback={<WorkstationLayer spec={spec} />} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "screens", spec.dynamic.screens)} svgFallback={<ScreenLayer spec={spec} />} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "body", spec.immutable.body)} svgFallback={<BodyLayer spec={spec} />} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "outfit", spec.dynamic.outfit)} svgFallback={<OutfitLayer spec={spec} />} />
     <NeckLayer spec={spec} />
-    <HeadLayer spec={spec} />
-    <HairLayer spec={spec} />
-    <EyeLayer spec={spec} />
-    <MouthLayer spec={spec} />
-    <PropLayer spec={spec} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "head", spec.immutable.head)} svgFallback={<HeadLayer spec={spec} />} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "skin", spec.immutable.skin)} svgFallback={null} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "hair", spec.immutable.hair)} svgFallback={<HairLayer spec={spec} />} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "eyes", spec.immutable.eyes)} svgFallback={<EyeLayer spec={spec} />} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "mouth", spec.immutable.mouth)} svgFallback={<MouthLayer spec={spec} />} />
+    <LayerAssetRenderer asset={findRenderAsset(spec, "prop", spec.dynamic.prop)} svgFallback={<PropLayer spec={spec} />} />
     <EffectsLayer spec={spec} />
     <FrameLayer spec={spec} />
   </svg>;
 }
-

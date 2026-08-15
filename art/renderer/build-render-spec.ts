@@ -3,9 +3,11 @@ import { ART_VERSION } from "@/art/version";
 import { CAREER_ART_POOLS } from "@/art/rules/career-pools";
 import { resolveCompatibility } from "@/art/rules/compatibility";
 import { buildPalette, DYNAMIC_ART_ASSETS, IMMUTABLE_ART_ASSETS } from "@/art/manifest";
-import type { DynamicSlot } from "@/art/manifest/dynamic";
-import type { ArtLayerAsset, DynamicArtState, FreakRenderSpec } from "@/art/renderer/types";
+import { toImmutableArtIdentity } from "@/art/manifest/immutable";
+import type { DynamicArtState, DynamicSlot } from "@/art/manifest/dynamic";
+import type { ArtLayerAsset, FreakRenderSpec } from "@/art/renderer/types";
 import { deterministicIndex, dnaSeed } from "@/art/renderer/deterministic";
+import { artAssetId, validateArtLayerAsset } from "@/art/renderer/assets";
 
 const DYNAMIC_SLOTS: readonly DynamicSlot[] = ["outfit", "workstation", "screens", "prop", "environment"];
 
@@ -20,10 +22,9 @@ export function buildDynamicState(tokenId: number, dna: FreakDNA, careerLevel: C
 }
 
 function findAsset(slot: string, value: string, assets: ArtLayerAsset[]): ArtLayerAsset {
-  const slug = value.toLowerCase().replaceAll(" ", "-");
-  const found = assets.find((asset) => asset.id === `v1:${slot}:${slug}`);
+  const found = assets.find((asset) => asset.id === artAssetId(slot, value));
   if (!found) throw new Error(`Missing V1 art descriptor for ${slot}:${value}`);
-  return found;
+  return validateArtLayerAsset(found);
 }
 
 export function buildRenderSpec(input: {
@@ -34,7 +35,7 @@ export function buildRenderSpec(input: {
   active?: boolean;
   recentAchievements?: readonly string[];
 }): FreakRenderSpec {
-  const immutable = { ...input.dna };
+  const immutable = toImmutableArtIdentity(input.dna);
   const dynamic = buildDynamicState(input.tokenId, immutable, input.careerLevel);
   const effects: string[] = [];
   if (input.careerLevel === "MARKET_GOD") effects.push("GOLD_AURA");
@@ -58,4 +59,3 @@ export function buildRenderSpec(input: {
     presentation: resolveCompatibility(immutable, dynamic, input.mood),
   };
 }
-

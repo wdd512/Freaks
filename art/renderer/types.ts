@@ -1,4 +1,6 @@
-import type { CareerLevel, FreakDNA, Mood } from "@/domain/types";
+import type { CareerLevel, Mood } from "@/domain/types";
+import type { ImmutableArtIdentity } from "@/art/manifest/immutable";
+import type { DynamicArtState } from "@/art/manifest/dynamic";
 
 export type ArtSlot =
   | "background"
@@ -16,20 +18,26 @@ export type ArtSlot =
   | "effects"
   | "frame";
 
-export type ArtLayerAsset = {
+export type ArtAssetPlacement = { x: number; y: number; width: number; height: number };
+
+export type SvgComponentArtLayerAsset = {
   id: string;
   slot: ArtSlot;
-  sourceType: "SVG_COMPONENT" | "IMAGE";
-  assetPath?: string;
+  sourceType: "SVG_COMPONENT";
+  assetPath?: never;
+  placement?: never;
 };
 
-export type DynamicArtState = {
-  outfit: string;
-  workstation: string;
-  screens: string;
-  prop: string;
-  environment: string;
+export type ImageArtLayerAsset = {
+  id: string;
+  slot: ArtSlot;
+  sourceType: "IMAGE";
+  assetPath: string;
+  placement: ArtAssetPlacement;
 };
+
+export type ArtLayerAsset = SvgComponentArtLayerAsset | ImageArtLayerAsset;
+export type { DynamicArtState } from "@/art/manifest/dynamic";
 
 export type FreakPalette = {
   background: string;
@@ -63,7 +71,7 @@ export type CompatibilityPresentation = {
 export type FreakRenderSpec = {
   version: string;
   tokenId: number;
-  immutable: FreakDNA;
+  immutable: ImmutableArtIdentity;
   dynamic: DynamicArtState;
   state: {
     careerLevel: CareerLevel;

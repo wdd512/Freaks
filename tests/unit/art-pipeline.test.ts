@@ -15,6 +15,7 @@ import { artAssetId, validateArtLayerAsset } from "@/art/renderer/assets";
 import { buildDynamicState, buildRenderSpec, selectDynamicSlot } from "@/art/renderer/build-render-spec";
 import { buildPalette } from "@/art/manifest/palettes";
 import { buildRenderSignature } from "@/art/renderer/render-signature";
+import { buildVisualFingerprint } from "@/art/renderer/visual-fingerprint";
 import { renderStaticSvg } from "@/art/renderer/render-static-svg";
 import type { ArtLayerAsset, FreakRenderSpec, ImageArtLayerAsset } from "@/art/renderer/types";
 import { PixelCanvas } from "@/components/freak/art/PixelCanvas";
@@ -71,7 +72,9 @@ describe("V1.1 art pipeline correctness", () => {
 
   test("tokenId and deterministic effects are signature-integrity fields", () => {
     const spec = buildRenderSpec(input);
-    expect(buildRenderSignature({ ...spec, tokenId: spec.tokenId + 1 })).not.toBe(buildRenderSignature(spec));
+    const differentToken = { ...spec, tokenId: spec.tokenId + 1 };
+    expect(buildRenderSignature(differentToken)).not.toBe(buildRenderSignature(spec));
+    expect(buildVisualFingerprint(differentToken)).toBe(buildVisualFingerprint(spec));
     const withSpark = { ...spec, effects: [...spec.effects, "ACHIEVEMENT_SPARK"] };
     expect(buildRenderSignature(withSpark)).not.toBe(buildRenderSignature(spec));
     expect(renderStaticSvg(withSpark)).not.toBe(renderStaticSvg(spec));
@@ -81,6 +84,7 @@ describe("V1.1 art pipeline correctness", () => {
     const original = buildRenderSpec({ ...input, mood: "EUPHORIC", active: true });
     const canonicallyEquivalent = { ...original, effects: [...original.effects].reverse(), assets: [...original.assets].reverse() };
     expect(buildRenderSignature(canonicallyEquivalent)).toBe(buildRenderSignature(original));
+    expect(buildVisualFingerprint(canonicallyEquivalent)).toBe(buildVisualFingerprint(original));
     expect(renderStaticSvg(canonicallyEquivalent)).toBe(renderStaticSvg(original));
   });
 
@@ -104,7 +108,7 @@ describe("V1.1 art pipeline correctness", () => {
   test("typed art manifest exactly matches the unchanged generator manifest", () => {
     for (const slot of immutableSlots) expect([...IMMUTABLE_TRAITS[slot]]).toEqual(TRAIT_MANIFEST[slot].map((trait) => trait.name));
     expect(IMMUTABLE_ART_ASSETS).toHaveLength(56);
-    expect(DYNAMIC_ART_ASSETS).toHaveLength(61);
+    expect(DYNAMIC_ART_ASSETS).toHaveLength(62);
   });
 
   test("dynamic slots resolve independently rather than as canned scenes", () => {
@@ -133,11 +137,13 @@ describe("V1.1 art pipeline correctness", () => {
     expect(markup).not.toContain("font-family");
   });
 
-  test("Production Pack V1 contains 41 aligned transparent PNG layers", async () => {
+  test("Production Pack V1 contains 42 unique aligned transparent PNG layers", async () => {
     expect(PRODUCTION_CHARACTER_TEMPLATE_V1.canvas).toEqual({ width: 128, height: 128 });
     const templateFile = path.join(process.cwd(), "public", PRODUCTION_CHARACTER_TEMPLATE_V1.referenceAsset.replace(/^\/+/, ""));
     expect(await sharp(templateFile).metadata()).toMatchObject({ format: "png", width: 128, height: 128, hasAlpha: true });
-    expect(PRODUCTION_PACK_V1_ASSETS).toHaveLength(41);
+    expect(PRODUCTION_PACK_V1_ASSETS).toHaveLength(42);
+    expect(new Set(PRODUCTION_PACK_V1_ASSETS.map((asset) => asset.id)).size).toBe(PRODUCTION_PACK_V1_ASSETS.length);
+    expect(new Set(PRODUCTION_PACK_V1_ASSETS.flatMap((asset) => asset.sourceType === "IMAGE" ? [asset.assetPath] : [])).size).toBe(PRODUCTION_PACK_V1_ASSETS.length);
     for (const asset of PRODUCTION_PACK_V1_ASSETS) {
       expect(asset.sourceType).toBe("IMAGE");
       if (asset.sourceType !== "IMAGE") continue;
@@ -165,6 +171,28 @@ describe("V1.1 art pipeline correctness", () => {
     expect(spec.assets).toHaveLength(11);
     expect(spec.assets.every((asset) => asset.sourceType === "IMAGE")).toBe(true);
     expect(renderStaticSvg(spec, false)).toContain("data-production-tint=\"skin\"");
+  });
+
+  test("every immutable Production Pack mapping points to a unique IMAGE asset", () => {
+    const immutable = PRODUCTION_PACK_V1_ASSETS.filter((asset) => /v1:(body|skin|head|eyes|mouth|hair):/.test(asset.id));
+    expect(immutable).toHaveLength(21);
+    expect(immutable.every((asset) => asset.sourceType === "IMAGE")).toBe(true);
+    expect(new Set(immutable.map((asset) => asset.id)).size).toBe(21);
+    expect(new Set(immutable.flatMap((asset) => asset.sourceType === "IMAGE" ? [asset.assetPath] : [])).size).toBe(21);
+  });
+
+  test("WHALE and MARKET_GOD resolve different controlled production coats", () => {
+    const productionDna: FreakDNA = { body: "Average", skin: "Warm Light", head: "Round", eyes: "Sleepy", mouth: "Smirk", hair: "Buzz Cut" };
+    const whale = buildRenderSpec({ tokenId: 8001, dna: productionDna, careerLevel: "WHALE", mood: "NEUTRAL" });
+    const marketGod = buildRenderSpec({ tokenId: 8001, dna: productionDna, careerLevel: "MARKET_GOD", mood: "NEUTRAL" });
+    expect(whale.dynamic.outfit).toBe("Luxury Coat");
+    expect(marketGod.dynamic.outfit).toBe("Market God Coat");
+    expect(whale.assets.find((asset) => asset.id.startsWith("v1:outfit:"))).toMatchObject({ sourceType: "IMAGE", assetPath: "/art/v1/outfit/luxury-coat.png" });
+    expect(marketGod.assets.find((asset) => asset.id.startsWith("v1:outfit:"))).toMatchObject({ sourceType: "IMAGE", assetPath: "/art/v1/outfit/market-god-coat.png" });
+    expect(marketGod.effects).toEqual(["GOLD_AURA"]);
+    expect(marketGod.assets).toHaveLength(11);
+    const markup = renderStaticSvg(marketGod, false);
+    expect(markup).not.toMatch(/<text|data-pixel-text/i);
   });
 
   test("IMAGE descriptors replace SVG fallback in browser and static export markup", () => {

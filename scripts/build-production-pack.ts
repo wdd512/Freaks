@@ -7,9 +7,10 @@ const OUTLINE = "#0b0e0d";
 const WHITE = "#f3efe5";
 const SHADOW = "#beb8ad";
 
-type Asset = { group: string; name: string; art: string };
+type Asset = { group: string; name: string; art?: string; source?: string };
 const assets: Asset[] = [];
 const add = (group: string, name: string, art: string) => assets.push({ group, name, art });
+const addSource = (group: string, name: string, source: string) => assets.push({ group, name, source });
 const rect = (x: number, y: number, width: number, height: number, fill: string, extra = "") => `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${fill}" ${extra}/>`;
 const polygon = (points: string, fill: string, extra = "") => `<polygon points="${points}" fill="${fill}" ${extra}/>`;
 const line = (points: string, stroke: string, width = 2) => `<polyline points="${points}" fill="none" stroke="${stroke}" stroke-width="${width}"/>`;
@@ -29,16 +30,16 @@ add("head", "potato", `${polygon("51,34 75,37 83,49 79,67 70,74 56,72 46,64 44,4
 add("head", "long", `${polygon("54,27 74,27 79,41 77,67 70,76 57,76 50,68 49,40", WHITE, `stroke="${OUTLINE}" stroke-width="3"`)}${rect(51, 52, 4, 14, SHADOW)}${rect(69, 71, 5, 3, SHADOW)}`);
 
 add("eyes", "sleepy", `${rect(50, 50, 12, 3, OUTLINE)}${rect(68, 50, 12, 3, OUTLINE)}${rect(53, 53, 7, 2, "#756e68")}${rect(70, 53, 7, 2, "#756e68")}`);
-add("eyes", "half-lidded", `${rect(49, 48, 13, 7, WHITE, `stroke="${OUTLINE}" stroke-width="2"`)}${rect(68, 48, 13, 7, WHITE, `stroke="${OUTLINE}" stroke-width="2"`)}${rect(49, 48, 13, 4, "#867e75")}${rect(68, 48, 13, 4, "#867e75")}${rect(57, 52, 3, 3, OUTLINE)}${rect(70, 52, 3, 3, OUTLINE)}`);
+add("eyes", "half-lidded", `${rect(49, 48, 13, 7, WHITE, `stroke="${OUTLINE}" stroke-width="2"`)}${rect(68, 51, 13, 6, WHITE, `stroke="${OUTLINE}" stroke-width="2"`)}${rect(49, 48, 13, 3, "#867e75")}${polygon("68,49 82,52 81,54 68,53", "#867e75", `stroke="${OUTLINE}" stroke-width="1"`)}${rect(56, 51, 3, 4, OUTLINE)}${rect(70, 53, 3, 4, OUTLINE)}`);
 add("eyes", "focused", `${polygon("48,49 62,46 60,55 50,54", WHITE, `stroke="${OUTLINE}" stroke-width="2"`)}${polygon("68,46 82,49 80,54 70,55", WHITE, `stroke="${OUTLINE}" stroke-width="2"`)}${rect(56, 49, 3, 5, OUTLINE)}${rect(70, 49, 3, 5, OUTLINE)}${rect(48, 43, 15, 3, OUTLINE)}${rect(68, 43, 15, 3, OUTLINE)}`);
 add("eyes", "dead-inside", `${line("51,48 60,57", OUTLINE, 3)}${line("60,48 51,57", OUTLINE, 3)}${line("69,48 78,57", OUTLINE, 3)}${line("78,48 69,57", OUTLINE, 3)}${rect(54, 59, 4, 2, "#6c645d")}${rect(72, 59, 4, 2, "#6c645d")}`);
 
 add("mouth", "flat", `${rect(57, 65, 16, 3, OUTLINE)}${rect(60, 68, 10, 2, "#6b343a")}`);
 add("mouth", "smirk", `${rect(56, 65, 11, 3, OUTLINE)}${rect(66, 63, 8, 3, OUTLINE)}${rect(70, 62, 4, 2, "#a65b66")}`);
-add("mouth", "tiny-frown", `${rect(59, 64, 11, 3, OUTLINE)}${rect(57, 62, 3, 3, OUTLINE)}${rect(70, 62, 3, 3, OUTLINE)}`);
+add("mouth", "tiny-frown", `${polygon("56,65 62,62 73,64 69,68 60,68", "#7e3948", `stroke="${OUTLINE}" stroke-width="2"`)}${rect(63, 63, 5, 3, WHITE)}${polygon("64,66 70,65 68,68 62,68", "#b85b6d")}`);
 
 add("hair", "buzz-cut", `${polygon("47,42 49,34 56,29 74,29 80,36 81,43", "#2e2925", `stroke="${OUTLINE}" stroke-width="3"`)}${[53,59,65,71,77].map((x) => rect(x, 33 + x % 2, 2, 2, "#59493d")).join("")}`);
-add("hair", "shaved", `${rect(54, 32, 4, 2, "#81746a")}${rect(62, 30, 4, 2, "#81746a")}${rect(70, 32, 4, 2, "#81746a")}${rect(78, 38, 2, 5, "#81746a")}`);
+add("hair", "shaved", "");
 add("hair", "short-messy", `${polygon("46,44 47,35 52,36 55,27 61,34 66,25 70,35 78,29 78,37 83,36 80,45 73,42 68,47 62,40 56,46 52,41", "#332a25", `stroke="${OUTLINE}" stroke-width="3"`)}${rect(56, 32, 5, 3, "#5e4837")}${rect(71, 34, 4, 3, "#5e4837")}`);
 add("hair", "hood-up", `${polygon("43,60 44,40 51,28 76,28 84,39 86,61 78,59 77,43 72,35 56,35 50,44 51,59", "#242e31", `stroke="${OUTLINE}" stroke-width="3"`)}${rect(44, 58, 9, 15, "#344348")}${rect(77, 58, 8, 15, "#344348")}${rect(48, 39, 4, 16, "#566168")}`);
 
@@ -48,6 +49,7 @@ add("outfit", "torn-hoodie", `${polygon("38,82 48,76 80,76 91,83 88,116 40,116",
 add("outfit", "clean-hoodie", `${polygon("38,82 48,76 80,76 91,83 88,116 40,116", "#26393b", `stroke="${OUTLINE}" stroke-width="3"`)}${polygon("49,78 64,91 79,78", "#43575a")}${rect(62, 89, 3, 27, "#111817")}${rect(49, 104, 30, 9, "#1c2c2e")}${rect(56, 83, 3, 15, "#7a5782")}${rect(70, 83, 3, 15, "#7a5782")}`);
 add("outfit", "pattern-hoodie", `${polygon("37,82 48,76 80,76 92,83 88,116 40,116", "#463755", `stroke="${OUTLINE}" stroke-width="3"`)}${polygon("49,78 64,91 79,78", "#6b547c")}${[43,51,59,67,75,83].map((x,i)=>rect(x, 96 + (i%2)*7, 5, 5, i%2 ? "#2ca477" : "#d2a84d")).join("")}${rect(62, 90, 3, 26, OUTLINE)}`);
 add("outfit", "luxury-coat", `${polygon("34,82 48,75 80,75 95,82 90,117 39,117", "#1e2028", `stroke="${OUTLINE}" stroke-width="3"`)}${polygon("38,82 61,101 55,116 39,116", "#363a48")}${polygon("91,82 67,101 73,116 90,116", "#292c38")}${rect(61, 94, 6, 22, "#6e4b86")}${rect(42, 110, 43, 3, "#d9b347")}${rect(46, 105, 5, 5, "#d9b347")}`);
+addSource("outfit", "market-god-coat", path.resolve(process.cwd(), "art", "references", "market-god-coat-concept.png"));
 
 add("environment", "poor-room", `${rect(0,0,128,128,"#171917")}${rect(0,67,128,61,"#0b100e")}${[12,31,50].map(y=>[0,27,54,81,108].map(x=>rect(x+(y%3)*4,y,22,2,"#34372f")).join("")).join("")}${rect(8,18,29,36,"#302a2c",`stroke="${OUTLINE}" stroke-width="3"`)}${rect(92,20,22,29,"#2b3230",`stroke="${OUTLINE}" stroke-width="3"`)}${rect(96,25,14,3,"#a5464f")}`);
 add("environment", "basic-trading-room", `${rect(0,0,128,128,"#18201f")}${rect(0,68,128,60,"#0a1110")}${rect(8,15,36,39,"#25302e",`stroke="#59625f" stroke-width="3"`)}${rect(84,15,35,39,"#25302e",`stroke="#59625f" stroke-width="3"`)}${[20,28,36,44].map(y=>rect(88,y,27,2,"#55ad78")).join("")}${rect(14,22,23,19,"#111918")}${line("16,38 22,31 28,34 36,25", "#d2545f",2)}`);
@@ -85,7 +87,14 @@ if (templateSource) {
 for (const asset of assets) {
   const directory = path.join(ROOT, asset.group);
   await mkdir(directory, { recursive: true });
-  await sharp(svg(asset.art)).ensureAlpha().png({ compressionLevel: 9, palette: false }).toFile(path.join(directory, `${asset.name}.png`));
+  const target = path.join(directory, `${asset.name}.png`);
+  if (asset.source) {
+    await sharp(asset.source).trim().resize(61, 43, { fit: "contain", kernel: "nearest", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .extend({ top: 75, bottom: 10, left: 34, right: 33, background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .ensureAlpha().png({ compressionLevel: 9, palette: false }).toFile(target);
+  } else {
+    await sharp(svg(asset.art ?? "")).ensureAlpha().png({ compressionLevel: 9, palette: false }).toFile(target);
+  }
 }
 
 await writeFile(path.join(ROOT, "production-pack-v1.json"), `${JSON.stringify({

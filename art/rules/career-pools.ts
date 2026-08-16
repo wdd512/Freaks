@@ -18,6 +18,6 @@ export const CAREER_ART_POOLS: Record<CareerLevel, Record<DynamicSlot, readonly 
     outfit: ["Luxury Coat"], workstation: ["Executive Trading Setup"], screens: ["Premium Chart Wall"], prop: ["Gold Crypto Trophy"], environment: ["Luxury Night Office"],
   },
   MARKET_GOD: {
-    outfit: ["Luxury Coat"], workstation: ["Executive Trading Setup"], screens: ["Premium Chart Wall"], prop: ["Gold Crypto Trophy"], environment: ["Luxury Night Office"],
+    outfit: ["Market God Coat"], workstation: ["Executive Trading Setup"], screens: ["Premium Chart Wall"], prop: ["Gold Crypto Trophy"], environment: ["Luxury Night Office"],
   },
 };

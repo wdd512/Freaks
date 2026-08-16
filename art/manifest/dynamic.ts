@@ -1,7 +1,7 @@
 import type { ArtLayerAsset } from "@/art/renderer/types";
 
 export const DYNAMIC_TRAITS = {
-  outfit: ["Stained Tee", "Bathrobe", "Basic Tee", "Cheap Hoodie", "Oversized Hoodie", "Track Jacket", "Office Shirt", "Tech Vest", "Half Suit", "Luxury Coat", "Torn Hoodie", "Clean Hoodie", "Pattern Hoodie"],
+  outfit: ["Stained Tee", "Bathrobe", "Basic Tee", "Cheap Hoodie", "Oversized Hoodie", "Track Jacket", "Office Shirt", "Tech Vest", "Half Suit", "Luxury Coat", "Torn Hoodie", "Clean Hoodie", "Pattern Hoodie", "Market God Coat"],
   workstation: ["Floor Setup", "Cardboard Desk", "Folding Desk", "IKEA Desk", "Office Desk", "Gaming Desk", "Standing Desk", "Institutional Desk", "Old Laptop Desk", "Single Monitor Desk", "Dual Monitor Setup", "Executive Trading Setup"],
   screens: ["Phone Only", "Cracked Laptop", "CRT", "Single Monitor", "Dual Monitor", "Triple Monitor", "Ultrawide", "Wall of Screens", "Red Dump Chart", "Green Uptrend Chart", "Two Mixed Charts", "Premium Chart Wall"],
   prop: ["Cold Pizza", "Energy Drink", "Phone", "Coffee", "Calculator", "Ledger", "Champagne", "Coffee Mug", "Purple Crystal", "Gold Crypto Trophy"],

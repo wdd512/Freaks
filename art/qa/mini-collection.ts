@@ -2,7 +2,7 @@ import type { GeneratedFreak } from "@/domain/rarity/generator";
 import { CAREER_LEVELS, type CareerLevel, type FreakDNA, type Personality, type RarityTier } from "@/domain/types";
 import { buildRenderSpec } from "@/art/renderer/build-render-spec";
 import { buildRenderSignature } from "@/art/renderer/render-signature";
-import { dnaSeed, stableHash } from "@/art/renderer/deterministic";
+import { buildVisualFingerprint, buildVisualFingerprintHash } from "@/art/renderer/visual-fingerprint";
 import type { DynamicArtState, FreakRenderSpec } from "@/art/renderer/types";
 
 export const MINI_COLLECTION_V1_SEED = "pnl-freaks-art-v1";
@@ -19,7 +19,8 @@ export type MiniCollectionEntry = {
   careerLevel: CareerLevel;
   dynamic: DynamicArtState;
   renderSignature: string;
-  visualHash: string;
+  visualFingerprint: string;
+  visualFingerprintHash: string;
   imageAssetPaths: string[];
   svgFallbackIds: string[];
 };
@@ -28,9 +29,10 @@ export type MiniCollectionQaReport = {
   seed: string;
   generatedCount: number;
   traitFrequencies: Record<string, Record<string, number>>;
-  duplicateRenderSignatureCount: number;
-  duplicateRenderSignatures: { renderSignature: string; tokenIds: number[] }[];
-  nearDuplicateWarnings: { tokenIds: [number, number]; differingDynamicSlots: string[] }[];
+  duplicateVisualFingerprintCount: number;
+  duplicateVisualFingerprints: { visualFingerprint: string; tokenIds: number[] }[];
+  nearDuplicateWarnings: { tokenIds: [number, number]; differingTraitSlots: MiniCollectionTraitSlot[] }[];
+  similarityWarnings: { tokenIds: [number, number]; differingTraitSlots: MiniCollectionTraitSlot[] }[];
   missingImageLayers: string[];
   imageAssetReferenceCount: number;
   svgFallbackInstanceCount: number;
@@ -41,14 +43,11 @@ export function miniCollectionCareer(tokenId: number): CareerLevel {
   return CAREER_LEVELS[(tokenId - 1) % CAREER_LEVELS.length];
 }
 
-function visualHash(signature: string): string {
-  return stableHash(signature).toString(16).padStart(8, "0");
-}
-
 export function createMiniCollectionEntry(freak: GeneratedFreak): MiniCollectionEntry {
   const careerLevel = miniCollectionCareer(freak.tokenId);
   const spec = buildRenderSpec({ tokenId: freak.tokenId, dna: freak.dna, careerLevel, mood: "NEUTRAL", active: false });
   const renderSignature = buildRenderSignature(spec);
+  const visualFingerprint = buildVisualFingerprint(spec);
   return {
     tokenId: freak.tokenId,
     name: freak.name,
@@ -58,7 +57,8 @@ export function createMiniCollectionEntry(freak: GeneratedFreak): MiniCollection
     careerLevel,
     dynamic: spec.dynamic,
     renderSignature,
-    visualHash: visualHash(renderSignature),
+    visualFingerprint,
+    visualFingerprintHash: buildVisualFingerprintHash(visualFingerprint),
     imageAssetPaths: spec.assets.filter((asset) => asset.sourceType === "IMAGE").map((asset) => asset.assetPath),
     svgFallbackIds: spec.assets.filter((asset) => asset.sourceType === "SVG_COMPONENT").map((asset) => asset.id),
   };
@@ -88,29 +88,32 @@ function buildTraitFrequencies(entries: readonly MiniCollectionEntry[]): Record<
   return frequencies;
 }
 
-export function buildMiniCollectionQaReport(entries: readonly MiniCollectionEntry[], missingImageLayers: readonly string[] = []): MiniCollectionQaReport {
-  const bySignature = new Map<string, number[]>();
+const VISUAL_TRAIT_SLOTS: MiniCollectionTraitSlot[] = ["body", "skin", "head", "eyes", "mouth", "hair", "outfit", "workstation", "screens", "prop", "environment"];
+
+function differingVisualTraitSlots(left: MiniCollectionEntry, right: MiniCollectionEntry): MiniCollectionTraitSlot[] {
+  return VISUAL_TRAIT_SLOTS.filter((slot) => miniCollectionTraitValue(left, slot) !== miniCollectionTraitValue(right, slot));
+}
+
+export function buildMiniCollectionQaReport(entries: readonly MiniCollectionEntry[], missingImageLayers: readonly string[] = [], seed = MINI_COLLECTION_V1_SEED): MiniCollectionQaReport {
+  const byFingerprint = new Map<string, number[]>();
   const fallbackUsage = new Map<string, number[]>();
   let imageAssetReferenceCount = 0;
   for (const entry of entries) {
-    bySignature.set(entry.renderSignature, [...(bySignature.get(entry.renderSignature) ?? []), entry.tokenId]);
+    byFingerprint.set(entry.visualFingerprint, [...(byFingerprint.get(entry.visualFingerprint) ?? []), entry.tokenId]);
     imageAssetReferenceCount += entry.imageAssetPaths.length;
     for (const assetId of entry.svgFallbackIds) fallbackUsage.set(assetId, [...(fallbackUsage.get(assetId) ?? []), entry.tokenId]);
   }
-  const duplicateRenderSignatures = [...bySignature.entries()]
+  const duplicateVisualFingerprints = [...byFingerprint.entries()]
     .filter(([, tokenIds]) => tokenIds.length > 1)
-    .map(([renderSignature, tokenIds]) => ({ renderSignature, tokenIds }));
+    .map(([visualFingerprint, tokenIds]) => ({ visualFingerprint, tokenIds }));
 
   const nearDuplicateWarnings: MiniCollectionQaReport["nearDuplicateWarnings"] = [];
-  const byDna = new Map<string, MiniCollectionEntry[]>();
-  for (const entry of entries) byDna.set(dnaSeed(entry.dna), [...(byDna.get(dnaSeed(entry.dna)) ?? []), entry]);
-  for (const group of byDna.values()) {
-    for (let left = 0; left < group.length; left += 1) {
-      for (let right = left + 1; right < group.length; right += 1) {
-        const differingDynamicSlots = Object.keys(group[left].dynamic).filter((slot) =>
-          group[left].dynamic[slot as keyof DynamicArtState] !== group[right].dynamic[slot as keyof DynamicArtState]);
-        if (differingDynamicSlots.length <= 1) nearDuplicateWarnings.push({ tokenIds: [group[left].tokenId, group[right].tokenId], differingDynamicSlots });
-      }
+  const similarityWarnings: MiniCollectionQaReport["similarityWarnings"] = [];
+  for (let left = 0; left < entries.length; left += 1) {
+    for (let right = left + 1; right < entries.length; right += 1) {
+      const differingTraitSlots = differingVisualTraitSlots(entries[left], entries[right]);
+      if (differingTraitSlots.length === 1) nearDuplicateWarnings.push({ tokenIds: [entries[left].tokenId, entries[right].tokenId], differingTraitSlots });
+      else if (differingTraitSlots.length === 2) similarityWarnings.push({ tokenIds: [entries[left].tokenId, entries[right].tokenId], differingTraitSlots });
     }
   }
 
@@ -118,16 +121,16 @@ export function buildMiniCollectionQaReport(entries: readonly MiniCollectionEntr
     .map(([assetId, tokenIds]) => ({ assetId, count: tokenIds.length, tokenIds }))
     .sort((left, right) => right.count - left.count || left.assetId.localeCompare(right.assetId));
   return {
-    seed: MINI_COLLECTION_V1_SEED,
+    seed,
     generatedCount: entries.length,
     traitFrequencies: buildTraitFrequencies(entries),
-    duplicateRenderSignatureCount: duplicateRenderSignatures.reduce((total, duplicate) => total + duplicate.tokenIds.length - 1, 0),
-    duplicateRenderSignatures,
+    duplicateVisualFingerprintCount: duplicateVisualFingerprints.reduce((total, duplicate) => total + duplicate.tokenIds.length - 1, 0),
+    duplicateVisualFingerprints,
     nearDuplicateWarnings,
+    similarityWarnings,
     missingImageLayers: [...new Set(missingImageLayers)].sort(),
     imageAssetReferenceCount,
     svgFallbackInstanceCount: svgFallbackUsage.reduce((total, fallback) => total + fallback.count, 0),
     svgFallbackUsage,
   };
 }
-

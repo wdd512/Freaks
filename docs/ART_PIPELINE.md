@@ -15,6 +15,23 @@ tokenId + immutable DNA + career + mood + active
 
 `ART_VERSION` is `v1`. A `FreakRenderSpec` contains immutable identity, independently selected dynamic state, presentation adjustments, a limited palette, effects, and `ArtLayerAsset` descriptors. The shared layer adapter renders either the current SVG component or a local transparent PNG/WebP selected by the descriptor without changing game or domain logic.
 
+## PNL FREAKS STYLE MASTER V1
+
+- strong chunky pixel art
+- fully 2D
+- no realism
+- no smooth AI-style gradients
+- crisp pixel edges
+- restrained palette
+- black/dark outlines
+- character-first composition
+- backgrounds must support the character
+- avoid excessive environmental objects
+- no career/status labels embedded in NFT artwork
+- Market God must feel premium through quality, not clutter
+- target human-made pixel-art feeling
+- avoid generic AI-generated visual noise
+
 ## Determinism and identity
 
 Every dynamic slot hashes a seed containing:
@@ -25,7 +42,9 @@ art version | token ID | full DNA | career | slot name
 
 There is no `Math.random()` in the art pipeline. Outfit, workstation, screens, prop, and environment are resolved independently from career pools. Career evolution never mutates body, skin, head, eyes, mouth, or hair/headwear.
 
-`buildRenderSignature(spec)` canonically includes version, token ID, immutable and dynamic values, state, sorted effects, presentation, palette, and sorted asset decisions. Anything represented by a supported V1 spec that can alter static SVG output therefore changes its signature. Changing the renderer version is explicit and does not require changing Freak DNA.
+`buildRenderSignature(spec)` canonically includes version, token ID, immutable and dynamic values, state, sorted effects, presentation, palette, and sorted asset decisions. It is the token-specific integrity signature and is not described as a visual hash.
+
+`buildVisualFingerprint(spec)` separately includes only pixel-affecting state: immutable and dynamic visuals, rendering state, effects, presentation geometry, palette, and canonical asset IDs, paths, and placements. It excludes token ID and names. Two specs that render the same artwork therefore share a visual fingerprint even when their canonical render signatures differ.
 
 ## Layers
 
@@ -50,7 +69,7 @@ Coordinates use integer logical pixels. Browser scaling and PNG export use neare
 
 ## Visual coverage
 
-The immutable manifest has 56 rendered values: 8 bodies, 8 skin palettes, 10 heads, 10 eyes, 8 mouths, and 12 hair/headwear styles. The dynamic manifest has 61 values: 13 outfits, 12 workstations, 12 screen arrangements, 10 props, and 14 environments.
+The immutable manifest has 56 rendered values: 8 bodies, 8 skin palettes, 10 heads, 10 eyes, 8 mouths, and 12 hair/headwear styles. The dynamic manifest has 62 values: 14 outfits, 12 workstations, 12 screen arrangements, 10 props, and 14 environments.
 
 Compatibility rules never reroll DNA. They reposition low floor desks, suppress desktop layouts for Phone Only, frame Wall of Screens where appropriate, fit headwear modes across head silhouettes, and preserve extreme mouth/head combinations.
 
@@ -60,12 +79,13 @@ Run `npm run dev` and open [http://localhost:3000/art-lab](http://localhost:3000
 
 It includes:
 
-- a dedicated six-career Production Pack V1 preview;
+- a dedicated six-career engineering placeholder pack preview;
 - a dedicated Mini Collection V1 grid of 50 deterministic previews using `pnl-freaks-art-v1` and balanced career assignment;
+- a separate `PRODUCTION ONLY — 50 FREAKS` section generated from a fixed QA seed and only IMAGE-covered immutable DNA;
 - career, rarity, personality, immutable/dynamic trait, token, mood, and active filters;
-- sorting by token ID, rarity, or visual signature hash;
-- expandable immutable DNA, dynamic traits, asset mode, visual hash, and full render signature metadata;
-- local dev-only problem flags stored in ignored `data/art-lab-flags.json`;
+- sorting by token ID, rarity, or visual fingerprint;
+- external expandable immutable DNA, dynamic traits, asset mode, visual fingerprint, fingerprint hash, and canonical render signature metadata;
+- collection-scoped local dev-only problem flags stored in ignored `data/art-lab-flags.json`;
 - a six-career same-Freak evolution comparison;
 - forced matrices for every immutable value;
 - optional complete render signatures and per-trait `SVG`/`IMAGE` production-asset modes.
@@ -76,11 +96,14 @@ It includes:
 npm run art:export -- --count 50 --career INTERN
 npm run art:export -- --count 50 --career INTERN --format png
 npm run art:export-mini -- --per-card
+npm run art:export-mini -- --production-only --per-card
 ```
 
 SVG is the default. PNG uses Sharp and is emitted at 512×512. Both commands write numbered files and `manifest.json` to ignored `art-output/`. Optional arguments are `--mood`, `--seed`, and `--output`.
 
-`art:export-mini` exports the exact Mini Collection V1 seed and career assignment used by Art Lab. It writes a single 10×5 `contact-sheet.png`, `manifest.json`, and `qa-report.json` under `art-output/mini-collection-v1/`. Add `--per-card` for 50 individual PNGs, `--cell-size` to change the default 256-pixel card size, or `--output` to choose another directory. The QA report records trait frequencies, completed renders, missing IMAGE paths, duplicate signatures, same-DNA near-duplicate warnings, and every active SVG fallback.
+`art:export-mini` exports the exact Mini Collection V1 seed and career assignment used by Art Lab. It writes a single 10×5 `contact-sheet.png`, `manifest.json`, and `qa-report.json` under `art-output/mini-collection-v1/`. Add `--per-card` for 50 individual PNGs, `--cell-size` to change the default 256-pixel card size, or `--output` to choose another directory.
+
+`--production-only` switches to the separate deterministic QA helper and writes `art-output/mini-collection-production-v1/`. It does not call or modify the Genesis generator. Its report contains generated and completed counts, failures, missing IMAGE layers, IMAGE references, SVG fallback instances, exact visual fingerprint groups, one-trait near-duplicate warnings, two-trait similarity warnings, and trait frequencies.
 
 ## Adding production layer assets
 
@@ -93,13 +116,15 @@ SVG is the default. PNG uses Sharp and is emitted at 512×512. Both commands wri
 
 Trait renderers use literal unions and exhaustive switches. Unknown values throw instead of silently falling back to another visual. Tests hash actual static SVG output and require every registered value within a slot to produce unique static output.
 
-## Production Pack V1
+## ENGINEERING PLACEHOLDER PRODUCTION PACK
 
-Production Pack V1 adds 41 transparent, aligned, 128×128 PNG layers under `public/art/v1/`. The fixed template and anchors live in `art/manifest/production-pack-v1.ts`; `public/art/v1/template/production-character-template-v1.png` is the normalized visual reference. All production files use kebab-case names.
+The current programmatically generated pack is explicitly an **ENGINEERING PLACEHOLDER PRODUCTION PACK**. It validates layer alignment, asset replacement, rendering, export, and QA. It is **not** final collection art.
+
+The placeholder pack adds 42 transparent, aligned, 128×128 PNG layers under `public/art/v1/`. The fixed template and anchors live in `art/manifest/production-pack-v1.ts`; `public/art/v1/template/production-character-template-v1.png` is the normalized visual reference. All production files use kebab-case names.
 
 The pack covers 3 bodies, 3 heads, 4 eyes, 3 mouths, 4 hair/headwear styles, 4 skin treatments, and four values for each dynamic slot. Existing generator DNA remains unchanged. Where the production vocabulary differs, the manifest bridges it to existing DNA: `half-lidded` is `Lazy Eye`, `focused` is `Laser Focus`, `dead-inside` is `Dead`, `tiny-frown` is `Lip Bite`, `shaved` is `Bald`, `short-messy` is `Messy Fringe`, `olive-tan` is `Olive`, and `deep-brown` is `Deep`.
 
-Career pools use the requested production progression. MARKET_GOD deliberately shares the premium WHALE scene ingredients and adds only the existing career aura, keeping exactly one premium prop and avoiding scene clutter. Unsupported immutable DNA continues through the exhaustive SVG fallback. IMAGE head and body masks use the selected production skin layer while retaining outline and pixel shading.
+Career pools use the requested production progression. WHALE uses `Luxury Coat`; MARKET_GOD uses the exclusive restrained purple/gold `Market God Coat`. They otherwise share the executive workstation, premium chart wall, gold trophy, and luxury night office. MARKET_GOD adds only the existing subtle career aura, keeping exactly one premium prop and avoiding scene clutter. Unsupported Genesis immutable DNA continues through the exhaustive SVG fallback. IMAGE head and body masks use the selected production skin layer while retaining outline and pixel shading.
 
 The source pack is reproducible:
 
@@ -111,4 +136,4 @@ Pass `--template-source <path>` only when deliberately normalizing a reviewed re
 
 ## Current limitations and next step
 
-Production coverage is intentionally partial. Unsupported immutable traits still use the programmer SVG layers; V2 should prioritize the most frequently generated immutable body/head/face/hair values, then add differentiated premium props and environment details without increasing scene clutter.
+Placeholder production coverage is intentionally partial. Unsupported Genesis immutable traits still use the programmer SVG layers. The next phase should replace the currently covered placeholders with approved hand-crafted chunky pixel art first, then prioritize frequently generated uncovered body/head/face/hair values without increasing scene clutter.

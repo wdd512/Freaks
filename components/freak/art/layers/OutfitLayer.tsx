@@ -25,6 +25,7 @@ export function OutfitLayer({ spec }: ArtLayerProps) {
     case "Torn Hoodie": detail = <><rect x={x} y={y} width={w} height={h} fill="#554d4b" /><polygon points={`${x + 3},${y} ${x + w / 2},${y + 14} ${x + w - 3},${y}`} fill="#6a5e59" /><rect x={x + 4} y={y + 22} width="10" height="4" fill="#272626" /></>; break;
     case "Clean Hoodie": detail = <><rect x={x} y={y} width={w} height={h} fill="#26393b" /><polygon points={`${x + 3},${y} ${x + w / 2},${y + 14} ${x + w - 3},${y}`} fill="#43575a" /><rect x={x + w / 2 - 1} y={y + 12} width="2" height={h - 12} fill="#111817" /></>; break;
     case "Pattern Hoodie": detail = <><rect x={x} y={y} width={w} height={h} fill="#463755" /><polygon points={`${x + 3},${y} ${x + w / 2},${y + 14} ${x + w - 3},${y}`} fill="#6b547c" />{[x + 6, x + 17, x + 28].map((px, index) => <rect key={px} x={px} y={y + 22 + index % 2 * 5} width="4" height="4" fill={index % 2 ? spec.palette.gold : spec.palette.green} />)}</>; break;
+    case "Market God Coat": detail = <><rect x={x - 2} y={y} width={w + 4} height={h} fill="#20212d" /><path d={`M${x} ${y}L${x + w / 2} ${y + 18}L${x + w} ${y}`} fill="none" stroke="#70449a" strokeWidth="6" /><path d={`M${x + 2} ${y + 2}L${x + w / 2} ${y + 21}L${x + w - 2} ${y + 2}M${x + 4} ${y + 27}H${x + w - 4}`} fill="none" stroke={gold} strokeWidth="3" /><rect x={x + w / 2 - 3} y={y + 17} width="6" height={h - 17} fill="#70449a" /></>; break;
     default: detail = assertNever(name, "outfit");
   }
   return <g data-layer="outfit" stroke={outline} strokeWidth="1">{detail}</g>;

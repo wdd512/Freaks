@@ -38,10 +38,11 @@ npm run seed:fresh            # 20 clean careers
 npm run db:reset              # clear local game data
 npm run settle:expired        # idempotent expired-session worker
 npm run generate:freaks -- --count 4444 --seed my-seed
-npm run art:build-pack         # rebuild 41 aligned Production Pack V1 PNG layers
+npm run art:build-pack         # rebuild 42 aligned placeholder production PNG layers
 npm run art:export -- --count 50 --career INTERN
 npm run art:export -- --count 50 --career INTERN --format png
 npm run art:export-mini -- --per-card  # contact sheet, cards, manifest, QA report
+npm run art:export-mini -- --production-only --per-card
 npm run typecheck
 npm run lint
 npm test                      # Vitest unit + integration suite
@@ -80,16 +81,16 @@ Settlement is one SQLite transaction. It re-reads state inside the transaction, 
 
 Integer cents persist SIM and market prices; integer parts-per-million persist returns and drawdowns. Career Score, normalized skill, and rating retain floating-point precision because they are bounded statistical scores, not balances.
 
-In development, `/art-lab` renders a dedicated six-career Production Pack V1 preview, a filterable/sortable Mini Collection V1 of 50 deterministic QA Freaks, local problem flags, all six career evolutions for one identity, and matrices covering all 56 immutable visual values. More detail lives in [GAME_ENGINE.md](docs/GAME_ENGINE.md), [DATA_MODEL.md](docs/DATA_MODEL.md), [GENERATION.md](docs/GENERATION.md), and [ART_PIPELINE.md](docs/ART_PIPELINE.md).
+In development, `/art-lab` renders a dedicated six-career placeholder-pack preview, the existing Genesis Mini Collection V1, and a separate deterministic `PRODUCTION ONLY — 50 FREAKS` QA collection with full IMAGE coverage. It also includes scoped local problem flags, all six career evolutions for one identity, and matrices covering all 56 immutable visual values. More detail lives in [GAME_ENGINE.md](docs/GAME_ENGINE.md), [DATA_MODEL.md](docs/DATA_MODEL.md), [GENERATION.md](docs/GENERATION.md), and [ART_PIPELINE.md](docs/ART_PIPELINE.md).
 
 ## V0 limitations
 
 - Mock prices are a deterministic game feed, not historical or live exchange data.
-- Production Pack V1 supplies 41 real transparent PNG layers; unsupported immutable traits retain the validated SVG fallback.
+- The **ENGINEERING PLACEHOLDER PRODUCTION PACK** supplies 42 transparent aligned PNG layers for pipeline validation; it is not final collection art. Unsupported Genesis immutable traits retain the validated SVG fallback.
 - Share cards are responsive HTML/SVG components; server-side PNG export is not implemented.
 - SQLite serializes local writes. A production deployment should move repository transactions to PostgreSQL with explicit row locks.
 - No background daemon is bundled; schedule `npm run settle:expired` externally or settle lazily through the UI.
 
 ## Next logical phase
 
-After art-direction review in Art Lab, expand Production Pack V1 coverage with hand-cleaned immutable variants while preserving DNA, generator probabilities, and render signatures. Game deployment, an optional read-only live market adapter with durable price snapshots, and season operations remain separate workstreams. Blockchain work should remain separate until the game is fun and the deterministic engine is stable.
+Replace the engineering placeholder assets with approved hand-crafted chunky pixel art while preserving the proven manifests, alignment, DNA, generator probabilities, signatures, export, and QA infrastructure. Game deployment, an optional read-only live market adapter with durable price snapshots, and season operations remain separate workstreams. Blockchain work should remain separate until the game is fun and the deterministic engine is stable.

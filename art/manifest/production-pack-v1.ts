@@ -30,7 +30,7 @@ export const PRODUCTION_PACK_V1_ASSETS: ArtLayerAsset[] = [
   image("mouth", "Flat", "mouth", "flat"), image("mouth", "Smirk", "mouth", "smirk"), image("mouth", "Lip Bite", "mouth", "tiny-frown"),
   image("hair", "Buzz Cut", "hair", "buzz-cut"), image("hair", "Bald", "hair", "shaved"), image("hair", "Messy Fringe", "hair", "short-messy"), image("hair", "Hoodie Up", "hair", "hood-up"),
   image("skin", "Warm Light", "head", "warm-light"), image("skin", "Bronze", "head", "bronze"), image("skin", "Olive", "head", "olive-tan"), image("skin", "Deep", "head", "deep-brown"),
-  image("outfit", "Torn Hoodie", "outfit", "torn-hoodie"), image("outfit", "Clean Hoodie", "outfit", "clean-hoodie"), image("outfit", "Pattern Hoodie", "outfit", "pattern-hoodie"), image("outfit", "Luxury Coat", "outfit", "luxury-coat"),
+  image("outfit", "Torn Hoodie", "outfit", "torn-hoodie"), image("outfit", "Clean Hoodie", "outfit", "clean-hoodie"), image("outfit", "Pattern Hoodie", "outfit", "pattern-hoodie"), image("outfit", "Luxury Coat", "outfit", "luxury-coat"), image("outfit", "Market God Coat", "outfit", "market-god-coat"),
   image("environment", "Poor Room", "environment", "poor-room"), image("environment", "Basic Trading Room", "environment", "basic-trading-room"), image("environment", "Clean Crypto Office", "environment", "clean-crypto-office"), image("environment", "Luxury Night Office", "environment", "luxury-night-office"),
   image("workstation", "Old Laptop Desk", "workstation", "old-laptop-desk"), image("workstation", "Single Monitor Desk", "workstation", "single-monitor-desk"), image("workstation", "Dual Monitor Setup", "workstation", "dual-monitor-setup"), image("workstation", "Executive Trading Setup", "workstation", "executive-trading-setup"),
   image("screens", "Red Dump Chart", "screens", "red-dump-chart"), image("screens", "Green Uptrend Chart", "screens", "green-uptrend-chart"), image("screens", "Two Mixed Charts", "screens", "two-mixed-charts"), image("screens", "Premium Chart Wall", "screens", "premium-chart-wall"),
@@ -38,4 +38,3 @@ export const PRODUCTION_PACK_V1_ASSETS: ArtLayerAsset[] = [
 ];
 
 export const PRODUCTION_PACK_V1_ASSET_IDS = new Set(PRODUCTION_PACK_V1_ASSETS.map((asset) => asset.id));
-

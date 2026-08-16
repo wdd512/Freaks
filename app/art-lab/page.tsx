@@ -3,6 +3,7 @@ import { generateCollection } from "@/domain/rarity/generator";
 import { ArtLabClient } from "@/components/freak/art/ArtLabClient";
 import { createMiniCollection, MINI_COLLECTION_V1_COUNT, MINI_COLLECTION_V1_SEED } from "@/art/qa/mini-collection";
 import { findMissingMiniCollectionImageLayers } from "@/art/qa/mini-collection-files";
+import { generateProductionOnlySample } from "@/art/qa/production-only-sample";
 
 export const dynamic = "force-dynamic";
 
@@ -11,5 +12,13 @@ export default async function ArtLabPage() {
   const preview = generateCollection(MINI_COLLECTION_V1_COUNT, MINI_COLLECTION_V1_SEED).freaks;
   const miniCollection = createMiniCollection(preview);
   const missingImageLayers = await findMissingMiniCollectionImageLayers(miniCollection);
-  return <ArtLabClient preview={preview} miniCollection={miniCollection} missingImageLayers={missingImageLayers} />;
+  const productionOnlyCollection = createMiniCollection(generateProductionOnlySample(MINI_COLLECTION_V1_COUNT));
+  const productionOnlyMissingImageLayers = await findMissingMiniCollectionImageLayers(productionOnlyCollection);
+  return <ArtLabClient
+    preview={preview}
+    miniCollection={miniCollection}
+    missingImageLayers={missingImageLayers}
+    productionOnlyCollection={productionOnlyCollection}
+    productionOnlyMissingImageLayers={productionOnlyMissingImageLayers}
+  />;
 }

@@ -32,7 +32,13 @@ function ArtSample({ tokenId, dna, career, mood, active, debug, label, testId }:
   </article>;
 }
 
-export function ArtLabClient({ preview, miniCollection, missingImageLayers }: { preview: GeneratedFreak[]; miniCollection: MiniCollectionEntry[]; missingImageLayers: string[] }) {
+export function ArtLabClient({ preview, miniCollection, missingImageLayers, productionOnlyCollection, productionOnlyMissingImageLayers }: {
+  preview: GeneratedFreak[];
+  miniCollection: MiniCollectionEntry[];
+  missingImageLayers: string[];
+  productionOnlyCollection: MiniCollectionEntry[];
+  productionOnlyMissingImageLayers: string[];
+}) {
   const [career, setCareer] = useState<CareerLevel>("INTERN");
   const [mood, setMood] = useState<Mood>("NEUTRAL");
   const [active, setActive] = useState(false);
@@ -56,11 +62,12 @@ export function ArtLabClient({ preview, miniCollection, missingImageLayers }: { 
       <label className="art-check"><input type="checkbox" checked={debug} onChange={(event) => setDebug(event.target.checked)} /> DEBUG LABELS</label>
     </section>
     <section className="section" aria-labelledby="production-pack-title">
-      <div className="section-heading"><div><div className="kicker">41 ALIGNED PNG LAYERS // 128×128</div><h2 id="production-pack-title">PRODUCTION PACK V1</h2></div><span className="muted">REAL IMAGE MODE</span></div>
-      <p className="muted">One production-template identity across every career pool. Each preview resolves real PNG environment, workstation, screen, outfit, and prop layers; supported immutable traits also switch to PNG.</p>
+      <div className="section-heading"><div><div className="kicker">42 ALIGNED PNG LAYERS // 128×128</div><h2 id="production-pack-title">PRODUCTION PACK V1</h2></div><span className="muted">ENGINEERING PLACEHOLDER PRODUCTION PACK</span></div>
+      <p className="muted">Alignment and IMAGE replacement validation only—not final collection art. Each preview resolves real PNG environment, workstation, screen, outfit, and prop layers; supported immutable traits also switch to PNG.</p>
       <div className="art-evolution-grid">{CAREER_LEVELS.map((level, index) => <ArtSample key={level} tokenId={8001 + index} dna={productionDna} career={level} mood="NEUTRAL" active={false} debug={debug} label={`PACK V1 · ${level}`} testId="production-pack-preview" />)}</div>
     </section>
     <MiniCollectionSection entries={miniCollection} missingImageLayers={missingImageLayers} />
+    <MiniCollectionSection entries={productionOnlyCollection} missingImageLayers={productionOnlyMissingImageLayers} mode="PRODUCTION_ONLY" />
     <section className="section" aria-labelledby="evolution-title">
       <div className="section-heading"><div><div className="kicker">SAME FREAK // SAME DNA</div><h2 id="evolution-title">COMPARE EVOLUTION</h2></div><span className="muted">#{selected.tokenId}</span></div>
       <div className="art-evolution-grid">{CAREER_LEVELS.map((level) => <ArtSample key={level} tokenId={selected.tokenId} dna={selected.dna} career={level} mood={mood} active={active} debug={debug} label={level} testId="art-evolution" />)}</div>
